@@ -2,7 +2,8 @@
 name = "vc"
 version = "0.0.1"
 dependencies = [
-    "galois"
+    "galois",
+    "numpy"
 ]
 
 [project.optional-dependencies]
