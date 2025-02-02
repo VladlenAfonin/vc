@@ -11,7 +11,7 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     return g * random_polynomial
 
 
-def fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
+def polynomial_fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
     weights = g.field([randomness ** power for power in range(folding_factor)])
     fold_matrix = g.coefficients().reshape((-1, folding_factor))
     folded_coefficients = numpy.dot(fold_matrix, weights)

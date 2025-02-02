@@ -15,6 +15,6 @@ FIELD = galois.GF(17)
     ])
 def test_fold(expected: galois.Array, polynomial_coefficients: galois.Array, randomness: int, folding_factor: int):
     g = galois.Poly(polynomial_coefficients, field=FIELD)
-    g_folded = vc.polynomial.fold(g, randomness, folding_factor)
+    g_folded = vc.polynomial.polynomial_fold(g, randomness, folding_factor)
 
     assert g_folded == galois.Poly(expected, field=g.field)
