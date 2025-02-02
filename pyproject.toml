@@ -1,0 +1,11 @@
+[project]
+name = "vc"
+version = "0.0.1"
+dependencies = [
+    "galois"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
