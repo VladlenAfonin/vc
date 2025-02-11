@@ -8,7 +8,7 @@ FIELD = galois.GF(17)
 
 
 @pytest.mark.parametrize(
-    "expected, polynomial_coefficients, randomness, folding_factor",
+    'expected, polynomial_coefficients, randomness, folding_factor',
     [
         ([2], [1, 1], 1, 2),
         ([3, 3], [1, 2, 2, 1], 1, 2)
