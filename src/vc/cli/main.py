@@ -2,6 +2,11 @@ import dataclasses
 import sys
 import argparse
 
+import galois
+
+from vc import polynomial
+from vc.prover import Prover, ProverOptions
+
 
 @dataclasses.dataclass(slots=True)
 class Options:
@@ -75,6 +80,8 @@ def parse_arguments() -> Options:
 
     namespace = parser.parse_args()
 
+    # TODO: Check arguments are correct.
+
     return Options(
         folding_factor=namespace.folding_factor,
         field=namespace.field,
@@ -86,9 +93,18 @@ def parse_arguments() -> Options:
 def main() -> int:
     options = parse_arguments()
 
-    print(f'{options}')
+    # TODO: Replace by logger.
+    print(f'{options = }')
 
-    # TODO: Initialize Prover.
+    field = galois.GF(options.field)
+    g = polynomial.random(options.initial_degree, field)
+
+    print(f'{g = }')
+
+    prover_options = ProverOptions(folding_factor=options.folding_factor)
+    prover = Prover(prover_options)
+    proof = prover.prove(g)
+
     # TODO: Initialize Verifier.
 
     return 0

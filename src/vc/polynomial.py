@@ -2,7 +2,11 @@ import galois
 import numpy
 
 
-def polynomial_quotient(g: galois.Poly, xs: galois.Array) -> galois.Poly:
+def random(degree: int, field: galois.FieldArray) -> galois.Poly:
+    return galois.Poly.Random(degree, field=field)
+
+
+def quotient(g: galois.Poly, xs: galois.Array) -> galois.Poly:
     return g // galois.Poly.Roots(xs)
 
 
@@ -11,7 +15,7 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     return g * random_polynomial
 
 
-def polynomial_fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
+def fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
     weights = g.field([randomness ** power for power in range(folding_factor)])
     fold_matrix = g.coefficients().reshape((-1, folding_factor))
     folded_coefficients = numpy.dot(fold_matrix, weights)
