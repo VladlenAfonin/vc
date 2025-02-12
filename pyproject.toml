@@ -10,3 +10,6 @@ dependencies = [
 test = [
     "pytest"
 ]
+
+[project.scripts]
+vc = "vc.cli.main:main"
