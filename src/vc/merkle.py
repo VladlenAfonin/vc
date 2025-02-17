@@ -7,7 +7,7 @@ import galois
 import pymerkle
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('vc')
 
 
 @dataclasses.dataclass(init=False, slots=True)
@@ -18,33 +18,33 @@ class MerkleTree:
         self._tree = pymerkle.InmemoryTree(algorithm=algorithm)
 
     def append_field_elements(self, field_elements: galois.FieldArray):
-        logger.info(f'MerkleTree.append_field_elements(): begin')
-        logger.info(f'MerkleTree.append_field_elements(): {field_elements = }')
+        logger.debug(f'MerkleTree.append_field_elements(): begin')
+        logger.debug(f'MerkleTree.append_field_elements(): {field_elements = }')
 
         for field_element in field_elements:
-            logger.info(f'MerkleTree.append_field_elements(): {field_element = }')
+            logger.debug(f'MerkleTree.append_field_elements(): appending {field_element = }')
 
             field_element_bytes = pickle.dumps(field_element)
-            # logger.info(f'MerkleTree.append_field_elements(): {field_element_bytes = }')
+            # logger.debug(f'MerkleTree.append_field_elements(): {field_element_bytes = }')
 
             self._tree.append_entry(field_element_bytes)
 
-        logger.info(f'MerkleTree.append_field_elements(): end')
+        logger.debug(f'MerkleTree.append_field_elements(): end')
 
     def append_field_element(self, field_element: galois.FieldArray):
-        logger.info(f'MerkleTree.append_field_element(): begin')
-        logger.info(f'MerkleTree.append_field_element(): {field_element = }')
+        logger.debug(f'MerkleTree.append_field_element(): begin')
+        logger.debug(f'MerkleTree.append_field_element(): {field_element = }')
 
         field_element_bytes = pickle.dumps(field_element)
-        # logger.info(f'MerkleTree.append_field_element(): {field_element_bytes = }')
+        # logger.debug(f'MerkleTree.append_field_element(): {field_element_bytes = }')
 
         self._tree.append_entry(field_element_bytes)
-        logger.info(f'MerkleTree.append_field_element(): end')
+        logger.debug(f'MerkleTree.append_field_element(): end')
 
     def get_root(self):
-        logger.info(f'MerkleTree.get_root(): begin')
+        logger.debug(f'MerkleTree.get_root(): begin')
         result = self._tree.get_state()
-        logger.info(f'MerkleTree.get_root(): {binascii.hexlify(result) = }')
-        logger.info(f'MerkleTree.get_root(): end')
+        logger.debug(f'MerkleTree.get_root(): {binascii.hexlify(result) = }')
+        logger.debug(f'MerkleTree.get_root(): end')
 
         return result

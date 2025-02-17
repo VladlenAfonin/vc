@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+import logging.config
 import sys
 import argparse
 
@@ -8,7 +9,26 @@ import galois
 from vc.prover import Prover, ProverOptions
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('vc')
+logging_config = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "%(levelname)s:%(name)s:%(message)s"
+        }
+    },
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout"
+        }
+    },
+    "loggers": {
+        "vc": { "level": "DEBUG", "handlers": ["stdout"] }
+    }
+}
 
 
 @dataclasses.dataclass(slots=True)
@@ -22,7 +42,7 @@ class Options:
     """Initial polynomial degree."""
     final_degree_log: int
     """Degree at which to stop."""
-    verifier_repetitions: int
+    security_level_log: int
     """Number of verifier repetitions."""
     expansion_factor_log: int
     """Expansion factor. Code rate reciprocal."""
@@ -83,14 +103,14 @@ def parse_arguments() -> Options:
         metavar='DEGREE',
         type=int)
 
-    parser.add_argument('--verifier-repetitions',
+    parser.add_argument('--security-level-log',
         action='store',
-        dest='verifier_repetitions',
-        help='number of verifier repetitions',
+        dest='security_level_log',
+        help='desired security level',
         nargs='+',
-        default=1,
+        default=2,
         required=False,
-        metavar='N',
+        metavar='LEVEL',
         type=int)
 
     namespace = parser.parse_args()
@@ -102,26 +122,27 @@ def parse_arguments() -> Options:
         field=namespace.field,
         final_degree_log=namespace.final_degree_log,
         initial_degree_log=namespace.initial_degree_log,
-        verifier_repetitions=namespace.verifier_repetitions,
+        security_level_log=namespace.security_level_log,
         expansion_factor_log=namespace.expansion_factor_log)
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO)
+    logging.config.dictConfig(logging_config)
 
     options = parse_arguments()
-    logger.info(f'main(): {options = }')
+    logger.debug(f'main(): {options = }')
 
     field = galois.GF(options.field)
-    logger.info(f'main(): {field = }')
+    logger.debug(f'main(): {field = }')
 
     g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
-    logger.info(f'main(): {g = }')
+    logger.debug(f'main(): {g = }')
 
     prover_options = ProverOptions(
         folding_factor_log=options.folding_factor_log,
-        expansion_factor_log=options.expansion_factor_log)
-    logger.info(f'main(): {prover_options = }')
+        expansion_factor_log=options.expansion_factor_log,
+        security_level_log=options.security_level_log)
+    logger.debug(f'main(): {prover_options = }')
 
     prover = Prover(prover_options)
     proof = prover.prove(g)

@@ -12,6 +12,9 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
 
 
 def fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
+    # TODO: This function fails if the polynomial being passed is constant.
+    #       This can happen after folding.
+
     weights = g.field([randomness ** power for power in range(folding_factor)])
     fold_matrix = g.coefficients().reshape((-1, folding_factor))
     folded_coefficients = numpy.dot(fold_matrix, weights)

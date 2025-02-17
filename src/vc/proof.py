@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import logging
 import pickle
 import typing
 
 import galois
 
 
+logger = logging.getLogger('vc')
 BYTE_SIZE_BITS = 8
 
 
@@ -19,10 +21,21 @@ class ProofStream:
     _len: int
 
     def __init__(self, field: galois.FieldArray, objects: typing.List[typing.Any] = []) -> None:
+        logger.debug(f'ProofStream.init(): begin')
+
         self._objects = objects
+        logger.debug(f'ProofStream.init(): {self._objects = }')
+
         self._field = field
+        logger.debug(f'ProofStream.init(): {self._field = }')
+
         self._read_index = 0
+        logger.debug(f'ProofStream.init(): {self._read_index = }')
+
         self._len = 0
+        logger.debug(f'ProofStream.init(): {self._len = }')
+
+        logger.debug(f'ProofStream.init(): end')
 
     def serialize(self, until_read_index: bool = False) -> bytes:
         data_to_serialize = self._objects[:self._read_index] \
@@ -49,19 +62,19 @@ class ProofStream:
         self._read_index += 1
         return result
 
-    def sample_prover(self, n: int = 32):
+    def sample_prover(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the prover."""
         return self._sample(False, n)
 
-    def sample_verifier(self, n: int = 32):
+    def sample_verifier(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the verifier."""
         return self._sample(True, n)
 
-    def sample_field_prover(self, n: int = 32):
+    def sample_field_prover(self, n: int = 32) -> galois.FieldArray:
         """Sample random field element. This function is to be called by the prover."""
         return self._sample_field(False, n)
 
-    def sample_field_verifier(self, n: int = 32):
+    def sample_field_verifier(self, n: int = 32) -> galois.FieldArray:
         """Sample random field element. This function is to be called by the prover."""
         return self._sample_field(True, n)
 
