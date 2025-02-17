@@ -6,7 +6,6 @@ import logging
 import typing
 
 import galois
-from pymerkle import InmemoryTree
 import pymerkle
 
 from vc import polynomial, domain
@@ -65,6 +64,9 @@ class Prover:
 
             assert is_pow2(coefficients_length), 'number of coefficients in polynomial must be a power of two'
 
+            self.polynomial = f
+            logger.info(f'Prover.State.init(): {f = }')
+
             field = f.field
 
             domain_length = coefficients_length * options.expansion_factor
@@ -81,9 +83,6 @@ class Prover:
 
             self.proof_stream = ProofStream(field)
             logger.info(f'Prover.State.init(): initialized empty ProofStream')
-
-            self.polynomial = f
-            logger.info(f'Prover.State.init(): {f = }')
 
             self.merkle_trees = []
             logger.info(f'Prover.State.init(): initialized empty merkle tree array')
@@ -108,7 +107,7 @@ class Prover:
 
     def prove(self, f: galois.Poly) -> ProofStream:
         """Prover that polynomial f is close to RS-code.
-        
+
         :param f: Polynomial to be proven.
         """
 
@@ -120,7 +119,7 @@ class Prover:
         evaluations = self._state.polynomial(self._state.evaluation_domain)
         logger.info(f'Prover.prove(): {evaluations = }')
 
-        logger.info(f'Prover.prove(): begin create merkle tree')
+        logger.info(f'Prover.prove(): create merkle tree')
         merkle_tree = MerkleTree(algorithm='sha3_256')
         merkle_tree.append_field_elements(evaluations)
 
