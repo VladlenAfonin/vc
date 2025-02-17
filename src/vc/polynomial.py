@@ -2,10 +2,6 @@ import galois
 import numpy
 
 
-def random(degree: int, field: galois.FieldArray) -> galois.Poly:
-    return galois.Poly.Random(degree, field=field)
-
-
 def quotient(g: galois.Poly, xs: galois.Array) -> galois.Poly:
     return g // galois.Poly.Roots(xs)
 
@@ -21,3 +17,10 @@ def fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
     folded_coefficients = numpy.dot(fold_matrix, weights)
 
     return galois.Poly(folded_coefficients, field=g.field)
+
+
+def is_colinear(points: galois.Array) -> bool:
+    assert points.shape[1] == 2, 'invalid points array shape. expected (*, 2)'
+
+    interpolation_polynomial = galois.lagrange_poly(points[:, 0], points[:, 1])
+    return interpolation_polynomial.degree < 2

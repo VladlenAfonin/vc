@@ -15,7 +15,6 @@ def fold(domain: galois.Array, folding_factor: int) -> galois.Array:
     assert is_pow2(domain.size)
 
     new_domain = np.unique_values(domain ** folding_factor)
-
     assert domain.size // new_domain.size == folding_factor
 
     return new_domain

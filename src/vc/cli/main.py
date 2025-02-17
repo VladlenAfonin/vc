@@ -1,26 +1,31 @@
 import dataclasses
+import logging
 import sys
 import argparse
 
 import galois
 
-from vc import polynomial
 from vc.prover import Prover, ProverOptions
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(slots=True)
 class Options:
     """Command line options."""
-    folding_factor: int
+    folding_factor_log: int
     """Folding factor."""
     field: int
     """Prime field modulus."""
-    initial_degree: int
+    initial_degree_log: int
     """Initial polynomial degree."""
-    final_degree: int
+    final_degree_log: int
     """Degree at which to stop."""
     verifier_repetitions: int
     """Number of verifier repetitions."""
+    expansion_factor_log: int
+    """Expansion factor. Code rate reciprocal."""
 
 
 def parse_arguments() -> Options:
@@ -28,12 +33,22 @@ def parse_arguments() -> Options:
         prog='vc',
         description='FRI polynomial commitment scheme experimentation program')
 
-    parser.add_argument('--folding-factor',
+    parser.add_argument('--folding-factor-log',
         action='store',
-        dest='folding_factor',
+        dest='folding_factor_log',
         help='folding factor',
         nargs='+',
-        default=2,
+        default=1,
+        required=False,
+        metavar='FACTOR',
+        type=int)
+
+    parser.add_argument('--expansion-factor-log',
+        action='store',
+        dest='expansion_factor_log',
+        help='expansion factor',
+        nargs='+',
+        default=1,
         required=False,
         metavar='FACTOR',
         type=int)
@@ -48,9 +63,9 @@ def parse_arguments() -> Options:
         metavar='MODULUS',
         type=int)
 
-    parser.add_argument('--final-degree',
+    parser.add_argument('--final-degree-log',
         action='store',
-        dest='final_degree',
+        dest='final_degree_log',
         help='degree when to stop the protocol',
         nargs='+',
         default=0,
@@ -58,12 +73,12 @@ def parse_arguments() -> Options:
         metavar='DEGREE',
         type=int)
 
-    parser.add_argument('--initial-degree',
+    parser.add_argument('--initial-degree-log',
         action='store',
-        dest='initial_degree',
+        dest='initial_degree_log',
         help='initial polynomial degree',
         nargs='+',
-        default=4,
+        default=2,
         required=False,
         metavar='DEGREE',
         type=int)
@@ -80,28 +95,34 @@ def parse_arguments() -> Options:
 
     namespace = parser.parse_args()
 
-    # TODO: Check arguments are correct.
+    # TODO: Add argument verification.
 
     return Options(
-        folding_factor=namespace.folding_factor,
+        folding_factor_log=namespace.folding_factor_log,
         field=namespace.field,
-        final_degree=namespace.final_degree,
-        initial_degree=namespace.initial_degree,
-        verifier_repetitions=namespace.verifier_repetitions)
+        final_degree_log=namespace.final_degree_log,
+        initial_degree_log=namespace.initial_degree_log,
+        verifier_repetitions=namespace.verifier_repetitions,
+        expansion_factor_log=namespace.expansion_factor_log)
 
 
 def main() -> int:
-    options = parse_arguments()
+    logging.basicConfig(level=logging.INFO)
 
-    # TODO: Replace by logger.
-    print(f'{options = }')
+    options = parse_arguments()
+    logger.info(f'main(): {options = }')
 
     field = galois.GF(options.field)
-    g = polynomial.random(options.initial_degree, field)
+    logger.info(f'main(): {field = }')
 
-    print(f'{g = }')
+    g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
+    logger.info(f'main(): {g = }')
 
-    prover_options = ProverOptions(folding_factor=options.folding_factor)
+    prover_options = ProverOptions(
+        folding_factor_log=options.folding_factor_log,
+        expansion_factor_log=options.expansion_factor_log)
+    logger.info(f'main(): {prover_options = }')
+
     prover = Prover(prover_options)
     proof = prover.prove(g)
 

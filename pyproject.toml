@@ -3,7 +3,8 @@ name = "vc"
 version = "0.0.1"
 dependencies = [
     "galois",
-    "numpy"
+    "numpy",
+    "pymerkle"
 ]
 
 [project.optional-dependencies]
