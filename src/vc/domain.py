@@ -12,7 +12,8 @@ def construct(field: galois.FieldArray, n: int) -> galois.Array:
 
 
 def fold(domain: galois.Array, folding_factor: int) -> galois.Array:
-    assert is_pow2(domain.size)
+    assert is_pow2(domain.size), 'domain size must be a power of two'
+    assert is_pow2(folding_factor), 'folding factor must be a power of two'
 
     new_domain = np.unique_values(domain ** folding_factor)
     assert domain.size // new_domain.size == folding_factor

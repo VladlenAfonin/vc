@@ -84,12 +84,52 @@ class ProofStream:
     def sample_index_verifier(self, upper_bound, n: int = 32) -> int:
         return self._sample_number(upper_bound, True, n)
 
+    def sample_indices_prover(self, amount: int, upper_bound, n: int = 32) -> typing.List[int]:
+        """Sample an array of distinct random numbers up to upper bound."""
+
+        logger.debug(f'ProofStream.sample_indices_prover(): begin')
+        logger.debug(f'ProofStream.sample_indices_prover(): {amount = }')
+        logger.debug(f'ProofStream.sample_indices_prover(): {upper_bound = }')
+        logger.debug(f'ProofStream.sample_indices_prover(): {n = }')
+
+        assert amount <= upper_bound, 'not enough integers to sample indices from'
+
+        if amount == upper_bound:
+            logger.debug(f'ProofStream.sample_indices_prover(): return all numbers up to upper bound')
+            return list(range(upper_bound))
+ 
+        logger.debug(f'ProofStream.sample_indices_prover(): sample random numbers')
+        result = []
+        i = 0
+        result_length = 0
+        while result_length < amount:
+            logger.debug(f'ProofStream.sample_indices_prover(): begin intermediate iteration {i = }')
+            random_number = self._sample_number(upper_bound, False, n, postfix=bytes(i))
+            logger.debug(f'ProofStream.sample_indices_prover(): intermediate {random_number = }')
+            if random_number not in result:
+                logger.debug(f'ProofStream.sample_indices_prover(): intermediate appending {random_number = }')
+                result_length += 1
+                logger.debug(f'ProofStream.sample_indices_prover(): intermediate {result_length = }')
+                result.append(random_number)
+                logger.debug(f'ProofStream.sample_indices_prover(): intermediate {result = }')
+            else:
+                logger.debug(f'ProofStream.sample_indices_prover(): intermediate skipping {random_number = }')
+
+            logger.debug(f'ProofStream.sample_indices_prover(): end intermediate iteration {i = }')
+            i += 1
+
+        logger.debug(f'ProofStream.sample_indices_prover(): final {result_length = }')
+        logger.debug(f'ProofStream.sample_indices_prover(): final {result = }')
+        logger.debug(f'ProofStream.sample_indices_prover(): end')
+
+        return result
+
     def _sample_field(self, until_read_index: bool, n: int):
         random_number = self._sample_number(self._field.order, until_read_index, n)
         return self._field(random_number)
 
-    def _sample_number(self, upper_bound: int, until_read_index: bool, n: int) -> int:
-        random_bytes = self._sample(until_read_index, n)
+    def _sample_number(self, upper_bound: int, until_read_index: bool, n: int, postfix: bytes = b'') -> int:
+        random_bytes = self._sample(until_read_index, n, postfix=postfix)
 
         accumulator = 0
         for random_byte in random_bytes:
@@ -97,8 +137,8 @@ class ProofStream:
 
         return accumulator % upper_bound
 
-    def _sample(self, until_read_index: bool, n: int):
+    def _sample(self, until_read_index: bool, n: int, postfix: bytes = b'') -> bytes:
         """Fiat-Shamir sampling base on current verifier view."""
 
         current_verifier_view = self.serialize(until_read_index)
-        return hashlib.shake_256(current_verifier_view).digest(n)
+        return hashlib.shake_256(current_verifier_view + postfix).digest(n)

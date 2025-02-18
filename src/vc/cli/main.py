@@ -6,7 +6,8 @@ import argparse
 
 import galois
 
-from vc.prover import Prover, ProverOptions
+from vc.prover import Prover
+from vc.parameters import FriParameters
 
 
 logger = logging.getLogger('vc')
@@ -78,7 +79,7 @@ def parse_arguments() -> Options:
         dest='field',
         help='prime field size',
         nargs='+',
-        default=17,
+        default=193,
         required=False,
         metavar='MODULUS',
         type=int)
@@ -86,21 +87,21 @@ def parse_arguments() -> Options:
     parser.add_argument('--final-degree-log',
         action='store',
         dest='final_degree_log',
-        help='degree when to stop the protocol',
+        help='number of coefficients when to stop the protocol',
         nargs='+',
         default=0,
         required=False,
-        metavar='DEGREE',
+        metavar='N',
         type=int)
 
     parser.add_argument('--initial-degree-log',
         action='store',
         dest='initial_degree_log',
-        help='initial polynomial degree',
+        help='initial number of coefficients',
         nargs='+',
-        default=2,
+        default=3,
         required=False,
-        metavar='DEGREE',
+        metavar='N',
         type=int)
 
     parser.add_argument('--security-level-log',
@@ -130,22 +131,26 @@ def main() -> int:
     logging.config.dictConfig(logging_config)
 
     options = parse_arguments()
-    logger.debug(f'main(): {options = }')
+    logger.info(f'main(): {options = }')
 
+    logger.debug(f'main(): create field')
     field = galois.GF(options.field)
     logger.debug(f'main(): {field = }')
 
+    logger.debug(f'main(): create random polynomial')
     g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
-    logger.debug(f'main(): {g = }')
+    logger.info(f'main(): created random polynomial {g = }')
 
-    prover_options = ProverOptions(
+    fri_parameters = FriParameters(
         folding_factor_log=options.folding_factor_log,
         expansion_factor_log=options.expansion_factor_log,
-        security_level_log=options.security_level_log)
-    logger.debug(f'main(): {prover_options = }')
+        security_level_log=options.security_level_log,
+        final_coefficients_length_log=options.final_degree_log,
+        initial_coefficients_length_log=options.initial_degree_log)
+    logger.info(f'main(): {fri_parameters = }')
 
-    prover = Prover(prover_options)
-    proof = prover.prove(g)
+    prover = Prover(fri_parameters)
+    proof_stream = prover.prove(g)
 
     # TODO: Initialize Verifier.
 
