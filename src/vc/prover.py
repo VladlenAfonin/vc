@@ -113,8 +113,8 @@ class Prover:
 
         # This is done in the STIR codebase. Not sure, why.
         # Probably this is needed because the initial round is out of the "rounds loop".
-        logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
-        accumulator -= 1
+        # logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
+        # accumulator -= 1
 
         logger.debug(f'Prover._get_number_of_rounds(): final {accumulator = }')
         logger.debug(f'Prover._get_number_of_rounds(): end')
