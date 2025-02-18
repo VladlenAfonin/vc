@@ -27,7 +27,7 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc": { "level": "DEBUG", "handlers": ["stdout"] }
+        "vc": { "level": "INFO", "handlers": ["stdout"] }
     }
 }
 
@@ -150,7 +150,8 @@ def main() -> int:
     logger.info(f'main(): {fri_parameters = }')
 
     prover = Prover(fri_parameters)
-    proof_stream = prover.prove(g)
+    proof = prover.prove(g)
+    logger.info(f'main(): {proof = }')
 
     # TODO: Initialize Verifier.
 

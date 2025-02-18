@@ -5,11 +5,11 @@ import logging
 import typing
 
 import galois
-import pymerkle
 
 from vc import polynomial, domain
 from vc.base import is_pow2
-from vc.proof import ProofStream
+from vc.proof import Proof, RoundProof
+from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
 
@@ -35,7 +35,7 @@ class Prover:
         """Domain offset. This is typically F* generator."""
         polynomial: galois.Poly
         """Current polynomial."""
-        proof_stream: ProofStream
+        sponge: Sponge
         """Proof stream to be filled."""
         merkle_trees: typing.List[MerkleTree]
         """Merkle trees for all rounds."""
@@ -65,8 +65,8 @@ class Prover:
             self.evaluation_domain = field([self.offset * (self.domain_generator ** i) for i in range(domain_length)])
             logger.debug(f'Prover.State.init(): {self.evaluation_domain = }')
 
-            self.proof_stream = ProofStream(field)
-            logger.debug(f'Prover.State.init(): initialized empty ProofStream')
+            self.sponge = Sponge(field)
+            logger.debug(f'Prover.State.init(): initialized empty Sponge')
 
             self.merkle_trees = []
             logger.debug(f'Prover.State.init(): initialized empty merkle tree array')
@@ -75,8 +75,12 @@ class Prover:
 
     _options: FriParameters
     """Public Prover options."""
-    _state: Prover.State | None = None
+    _state: Prover.State | None
     """Internal Prover state."""
+
+    _evaluations: typing.List[RoundProof] | None
+    """Intermediate evaluations."""
+    _merkle_roots: typing.List[bytes] | None
 
     def __init__(self, options: FriParameters) -> None:
         """Initialize new Prover.
@@ -90,6 +94,8 @@ class Prover:
 
         self._options = options
         self._state = None
+        self._evaluations = None
+        self._merkle_roots = None
 
         logger.debug(f'Prover.init(): end')
 
@@ -105,12 +111,17 @@ class Prover:
             current_domain_length //= self._options.folding_factor
             accumulator += 1
 
+        # This is done in the STIR codebase. Not sure, why.
+        # Probably this is needed because the initial round is out of the "rounds loop".
+        logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
+        accumulator -= 1
+
         logger.debug(f'Prover._get_number_of_rounds(): final {accumulator = }')
         logger.debug(f'Prover._get_number_of_rounds(): end')
 
         return accumulator
 
-    def prove(self, f: galois.Poly) -> ProofStream:
+    def prove(self, f: galois.Poly) -> Proof:
         """Prover that polynomial f is close to RS-code.
 
         :param f: Polynomial to be proven.
@@ -120,19 +131,28 @@ class Prover:
 
         logger.debug(f'Prover.prove(): create prover state')
         self._state = Prover.State(f, self._options)
+        logger.debug(f'Prover.prove(): initialize evaluations list')
+        self._evaluations = []
+        self._merkle_roots = []
 
         logger.debug(f'Prover.prove(): compute initial evaluations')
-        evaluations = self._state.polynomial(self._state.evaluation_domain)
-        logger.debug(f'Prover.prove(): {evaluations = }')
+        round_evaluations = self._state.polynomial(self._state.evaluation_domain)
+        logger.debug(f'Prover.prove(): {round_evaluations = }')
+
+        logger.debug(f'Prover.prove(): append evaluations to evaluations list')
+        self._evaluations.append(round_evaluations)
 
         logger.debug(f'Prover.prove(): create merkle tree')
         merkle_tree = MerkleTree(algorithm=self.HASH_ALGORITHM)
-        merkle_tree.append_field_elements(evaluations)
+        merkle_tree.append_field_elements(round_evaluations)
 
         merkle_root = merkle_tree.get_root()
 
-        logger.debug(f'Prover.prove(): push root into proof stream')
-        self._state.proof_stream.push(merkle_root)
+        logger.debug(f'Prover.prove(): append merkle root to merkle roots list')
+        self._merkle_roots.append(merkle_root)
+
+        logger.debug(f'Prover.prove(): push root into sponge')
+        self._state.sponge.push(merkle_root)
 
         logger.debug(f'Prover.prove(): append merkle tree to the list of merkle trees')
         self._state.merkle_trees.append(merkle_tree)
@@ -144,40 +164,45 @@ class Prover:
             logger.debug(f'Prover.prove(): commit round {i + 1}')
             self._round()
 
-        proofs = []
+        round_proofs: typing.List[RoundProof] = []
 
         logger.debug(f'Prover.prove(): sample query indices')
-        indices_range = self._options.initial_coefficients_length
-        logger.debug(f'Prover.prove(): {indices_range = }')
-        indices = self._state.proof_stream.sample_indices_prover(
+        query_indices_range = self._options.initial_coefficients_length
+        logger.debug(f'Prover.prove(): {query_indices_range = }')
+        query_indices = self._state.sponge.sample_indices_prover(
             self._options.number_of_repetitions,
-            indices_range)
-        logger.debug(f'Prover.prove(): {indices = }')
+            query_indices_range)
+        logger.debug(f'Prover.prove(): {query_indices = }')
 
         logger.debug(f'Prover.prove(): prove first round')
-        round_proofs = self._state.merkle_trees[0].prove_indices(indices)
-        proofs.append(round_proofs)
+        merkle_proofs = self._state.merkle_trees[0].prove_indices(query_indices)
+        round_proofs.append(RoundProof(self._evaluations[0], merkle_proofs))
 
         for i in range(number_of_rounds):
             logger.debug(f'Prover.prove(): query round {i + 1}')
 
-            indices_range //= self._options.folding_factor
-            logger.debug(f'Prover.prove(): {indices_range = }')
+            query_indices_range //= self._options.folding_factor
+            logger.debug(f'Prover.prove(): {query_indices_range = }')
 
-            indices = list(set(i % indices_range for i in indices))
-            logger.debug(f'Prover.prove(): {indices = }')
+            query_indices = list(set(i % query_indices_range for i in query_indices))
+            logger.debug(f'Prover.prove(): {query_indices = }')
 
-            round_proofs = self._state.merkle_trees[i + 1].prove_indices(indices)
-            proofs.append(round_proofs)
+            merkle_proofs = self._state.merkle_trees[i + 1].prove_indices(query_indices)
+            round_proofs.append(RoundProof(self._evaluations[i + 1], merkle_proofs))
+
+        logger.debug(f'Prover.prove(): finalize the proof')
+        result = Proof(round_proofs, self._merkle_roots, self._state.polynomial)
 
         logger.debug(f'Prover.prove(): end')
+
+        return result
 
     def _round(self) -> None:
         logger.debug(f'Prover._round(): begin')
 
         assert self._state is not None, 'state is not initialized'
 
-        verifier_randomness = self._state.proof_stream.sample_field_prover()
+        verifier_randomness = self._state.sponge.sample_field_prover()
         logger.debug(f'Prover._round(): {verifier_randomness = }')
 
         new_polynomial = polynomial.fold(
@@ -191,20 +216,26 @@ class Prover:
             self._options.folding_factor)
         logger.debug(f'Prover._round(): {new_evaluation_domain = }')
 
-        new_evaluations = new_polynomial(new_evaluation_domain)
-        logger.debug(f'Prover._round(): {new_evaluations = }')
+        new_round_evaluations = new_polynomial(new_evaluation_domain)
+        logger.debug(f'Prover._round(): {new_round_evaluations = }')
+
+        logger.debug(f'Prover._round(): append evaluations to evaluations list')
+        self._evaluations.append(new_round_evaluations)
 
         logger.debug(f'Prover._round(): create merkle tree')
         merkle_tree = MerkleTree(algorithm=self.HASH_ALGORITHM)
-        merkle_tree.append_field_elements(new_evaluations)
+        merkle_tree.append_field_elements(new_round_evaluations)
 
         logger.debug(f'Prover._round(): append merkle tree to the list of merkle trees')
         self._state.merkle_trees.append(merkle_tree)
 
         merkle_root = merkle_tree.get_root()
 
-        logger.debug(f'Prover._round(): push root into proof stream')
-        self._state.proof_stream.push(merkle_root)
+        logger.debug(f'Prover._round(): append merkle tree to the list of merkle trees')
+        self._merkle_roots.append(merkle_root)
+
+        logger.debug(f'Prover._round(): push root into sponge')
+        self._state.sponge.push(merkle_root)
 
         logger.debug(f'Prover._round(): set new polynomial')
         self._state.polynomial = new_polynomial
