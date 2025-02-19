@@ -141,7 +141,7 @@ class Prover:
         round_proofs: typing.List[RoundProof] = []
 
         logger.debug(f'Prover.prove(): sample query indices')
-        query_indices_range = self._options.initial_coefficients_length
+        query_indices_range = self._options.initial_evaluation_domain_length
         logger.debug(f'Prover.prove(): {query_indices_range = }')
         query_indices = self._state.sponge.squeeze_indices(
             self._options.number_of_repetitions,
