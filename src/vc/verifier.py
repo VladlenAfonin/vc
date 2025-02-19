@@ -93,16 +93,28 @@ class Verifier:
         logger.debug(f'Verifier.verify(): {query_indices = }')
 
         evaluation_domain = self._parameters.initial_evaluation_domain
+        folded_values = None
         for i in range(self._parameters.number_of_rounds + 1):
             logger.debug(f'Verifier.verify(): begin iteration {i = }')
+
+            # TODO: Add intermediate consistency checks.
+            # if folded_values is not None:
+            #     if not all(folded_value == evaluation for folded_value, evaluation in zip([folded_values], proof.round_proofs[i].evaluations)):
+            #         return False
 
             xs = evaluation_domain[query_indices]
             logger.debug(f'Verifier.verify(): {xs = }')
             ys = proof.round_proofs[i].evaluations
             logger.debug(f'Verifier.verify(): {ys = }')
 
-            folded_value = galois.lagrange_poly(xs, ys)(folding_randomness_array[i])
-            logger.debug(f'Verifier.verify(): {folded_value = }')
+            folded_values = galois.lagrange_poly(xs, ys)(folding_randomness_array[i])
+            logger.debug(f'Verifier.verify(): {folded_values = }')
+
+            # folded_values = []
+            # for x, y in zip(xs, ys):
+            #     logger.debug(f'Verifier.verify(): {x = }')
+            #     folded_values.append(galois.lagrange_poly(self._parameters.field(x), self._parameters.field(y))(folding_randomness_array[i]))
+            # logger.debug(f'Verifier.verify(): {folded_values = }')
 
             query_indices_range //= self._parameters.folding_factor
             logger.debug(f'Verifier.verify(): {query_indices_range = }')
