@@ -36,6 +36,10 @@ class FriParameters:
     """Number of FRI rounds."""
     field: galois.FieldArray
     """Field."""
+    omega: galois.Array
+    """Root of unity for initial domain generation."""
+    offset: galois.Array
+    """Multiplicative group generator."""
 
     def __init__(
             self,
@@ -87,6 +91,13 @@ class FriParameters:
 
         self.field = field
         logger.debug(f'FriParameters.init(): {self.field = }')
+
+        self.omega = field.primitive_root_of_unity(
+            self.initial_coefficients_length * self.expansion_factor)
+        logger.debug(f'FriParameters.init(): {self.omega = }')
+
+        self.offset = field.primitive_element
+        logger.debug(f'FriParameters.init(): {self.offset = }')
 
         logger.debug(f'FriParameters.init(): end')
 

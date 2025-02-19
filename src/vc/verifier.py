@@ -3,6 +3,8 @@ from __future__ import annotations
 import dataclasses
 import logging
 
+import galois
+
 from vc.constants import LOGGER_FRI, MEKRLE_HASH_ALGORITHM
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
@@ -23,6 +25,8 @@ class Verifier:
 
         sponge: Sponge
         """Sponge."""
+        initial_evaluation_domain: galois.Array
+        """Initial evaluation domain."""
 
     _parameters: FriParameters
     _state: Verifier.State
@@ -70,10 +74,6 @@ class Verifier:
                 return False
 
         logger.debug(f'Verifier.verify(): verify folds')
-
-        # logger.debug(f'Verifier.verify(): push initial merkle root into sponge')
-        # self._state.sponge.push(proof.merkle_roots[0])
-
         logger.debug(f'Verifier.verify(): get folding randomness array')
         folding_randomness_array = []
         for i in range(self._parameters.number_of_rounds):
@@ -81,6 +81,7 @@ class Verifier:
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
         logger.debug(f'Verifier.verify(): {folding_randomness_array = }')
         self._state.sponge.absorb(proof.merkle_roots[-1])
+        logger.debug(f'Verifier.verify(): {folding_randomness_array = }')
 
         logger.debug(f'Verifier.verify(): end')
         return True

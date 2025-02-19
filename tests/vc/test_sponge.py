@@ -1,18 +1,15 @@
 import random
 
-import galois
-import pytest
-
+from vc.constants import TEST_FIELD
 from vc.sponge import Sponge
 
 
-FIELD = galois.GF(193)
 NBYTES = 32
 
 
 def test_same():
-    sponge1 = Sponge(FIELD)
-    sponge2 = Sponge(FIELD)
+    sponge1 = Sponge(TEST_FIELD)
+    sponge2 = Sponge(TEST_FIELD)
 
     random_bytes = random.randbytes(NBYTES)
 

@@ -29,7 +29,7 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc.fri": { "level": "DEBUG", "handlers": ["stdout"] }
+        "vc": { "level": "DEBUG", "handlers": ["stdout"] }
     }
 }
 

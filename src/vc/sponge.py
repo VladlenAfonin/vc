@@ -47,8 +47,15 @@ class Sponge:
     def absorb(self, obj: typing.Any) -> None:
         """Push data to the proof stream."""
 
+        logger.debug(f'Sponge.absorb(): begin')
+
         self._len += 1
         self._objects.append(obj)
+
+        logger.debug(f'Sponge.absorb(): new {self._len = }')
+        logger.debug(f'Sponge.absorb(): new {self._objects = }')
+
+        logger.debug(f'Sponge.absorb(): end')
 
     def squeeze(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the prover."""

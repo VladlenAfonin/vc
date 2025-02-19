@@ -1,13 +1,12 @@
 import typing
 
 import pytest
-import galois
 
+from vc.constants import TEST_FIELD
 from vc.merkle import MerkleTree
 
 
-FIELD = galois.GF(193)
-AMOUNT = 4
+MERKLE_TREE_LEAVES_LENGTH = 4
 
 
 @pytest.mark.parametrize(
@@ -20,7 +19,7 @@ AMOUNT = 4
     ])
 def test_verify_valid(index: int):
     merkle_tree = MerkleTree()
-    field_elements = FIELD.Random(AMOUNT)
+    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
     merkle_tree.append_field_elements(field_elements)
     root = merkle_tree.get_root()
     proof = merkle_tree.prove_index(index)
@@ -44,7 +43,7 @@ def test_verify_valid(index: int):
     ])
 def test_verify_multiple_valid(indices: typing.List[int]):
     merkle_tree = MerkleTree()
-    field_elements = FIELD.Random(AMOUNT)
+    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
     merkle_tree.append_field_elements(field_elements)
     root = merkle_tree.get_root()
     proofs = merkle_tree.prove_indices(indices)
@@ -63,7 +62,7 @@ def test_verify_multiple_valid(indices: typing.List[int]):
     ])
 def test_verify_invalid(root: bytes):
     merkle_tree = MerkleTree()
-    field_elements = FIELD.Random(AMOUNT)
+    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
     merkle_tree.append_field_element(field_elements)
     proof = merkle_tree.prove_index(0)
 

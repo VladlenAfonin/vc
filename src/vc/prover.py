@@ -27,7 +27,7 @@ class Prover:
         """Current prover state."""
         evaluation_domain: galois.Array
         """Current evaluation domain."""
-        domain_generator: galois.Array
+        omega: galois.Array
         """Current domain generator. This is a root of unity."""
         offset: galois.Array
         """Domain offset. This is typically F* generator."""
@@ -58,13 +58,13 @@ class Prover:
             domain_length = coefficients_length * options.expansion_factor
             logger.debug(f'Prover.State.init(): {domain_length = }')
 
-            self.domain_generator = field.primitive_root_of_unity(domain_length)
-            logger.debug(f'Prover.State.init(): {self.domain_generator = }')
+            self.omega = options.omega
+            logger.debug(f'Prover.State.init(): {self.omega = }')
 
-            self.offset = field.primitive_element
+            self.offset = options.offset
             logger.debug(f'Prover.State.init(): {self.offset = }')
 
-            self.evaluation_domain = field([self.offset * (self.domain_generator ** i) for i in range(domain_length)])
+            self.evaluation_domain = field([self.offset * (self.omega ** i) for i in range(domain_length)])
             logger.debug(f'Prover.State.init(): {self.evaluation_domain = }')
 
             self.sponge = Sponge(field)
