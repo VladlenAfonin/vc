@@ -7,8 +7,10 @@ import typing
 import galois
 import pymerkle
 
+from vc.constants import LOGGER_MATH
 
-logger = logging.getLogger('vc')
+
+logger = logging.getLogger(LOGGER_MATH)
 
 
 @dataclasses.dataclass(init=False, slots=True)

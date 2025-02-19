@@ -8,13 +8,14 @@ import galois
 
 from vc import polynomial, domain
 from vc.base import is_pow2
+from vc.constants import LOGGER_FRI
 from vc.proof import Proof, RoundProof
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
 
 
-logger = logging.getLogger('vc')
+logger = logging.getLogger(LOGGER_FRI)
 
 
 @dataclasses.dataclass(init=False, slots=True)
@@ -99,28 +100,6 @@ class Prover:
 
         logger.debug(f'Prover.init(): end')
 
-    def _get_number_of_rounds(self, initial_domain_length: int) -> int:
-        logger.debug(f'Prover._get_number_of_rounds(): begin')
-
-        assert is_pow2(initial_domain_length), 'initial domain length must be a power of two'
-
-        current_domain_length = initial_domain_length
-        accumulator: int = 0
-        while self._options.expansion_factor < current_domain_length:
-            logger.debug(f'Prover._get_number_of_rounds(): current {accumulator = }')
-            current_domain_length //= self._options.folding_factor
-            accumulator += 1
-
-        # This is done in the STIR codebase. Not sure, why.
-        # Probably this is needed because the initial round is out of the "rounds loop".
-        # logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
-        # accumulator -= 1
-
-        logger.debug(f'Prover._get_number_of_rounds(): final {accumulator = }')
-        logger.debug(f'Prover._get_number_of_rounds(): end')
-
-        return accumulator
-
     def prove(self, f: galois.Poly) -> Proof:
         """Prover that polynomial f is close to RS-code.
 
@@ -157,10 +136,7 @@ class Prover:
         logger.debug(f'Prover.prove(): append merkle tree to the list of merkle trees')
         self._state.merkle_trees.append(merkle_tree)
 
-        logger.debug(f'Prover.prove(): get number of rounds')
-        number_of_rounds = self._get_number_of_rounds(self._state.evaluation_domain.size)
-
-        for i in range(number_of_rounds):
+        for i in range(self._options.number_of_rounds):
             logger.debug(f'Prover.prove(): commit round {i + 1}')
             self._round()
 
@@ -178,7 +154,7 @@ class Prover:
         merkle_proofs = self._state.merkle_trees[0].prove_indices(query_indices)
         round_proofs.append(RoundProof(self._evaluations[0], merkle_proofs))
 
-        for i in range(number_of_rounds):
+        for i in range(self._options.number_of_rounds):
             logger.debug(f'Prover.prove(): query round {i + 1}')
 
             query_indices_range //= self._options.folding_factor
@@ -190,8 +166,15 @@ class Prover:
             merkle_proofs = self._state.merkle_trees[i + 1].prove_indices(query_indices)
             round_proofs.append(RoundProof(self._evaluations[i + 1], merkle_proofs))
 
+        # As far as I understand, final polynomial does not need any proofs.
+        final_randomness = self._state.sponge.sample_field_prover()
+        final_polynomial = polynomial.fold(
+            self._state.polynomial,
+            final_randomness,
+            self._options.folding_factor)
+
         logger.debug(f'Prover.prove(): finalize the proof')
-        result = Proof(round_proofs, self._merkle_roots, self._state.polynomial)
+        result = Proof(round_proofs, self._merkle_roots, final_polynomial)
 
         logger.debug(f'Prover.prove(): end')
 
@@ -231,7 +214,7 @@ class Prover:
 
         merkle_root = merkle_tree.get_root()
 
-        logger.debug(f'Prover._round(): append merkle tree to the list of merkle trees')
+        logger.debug(f'Prover._round(): append merkle root to merkle roots list')
         self._merkle_roots.append(merkle_root)
 
         logger.debug(f'Prover._round(): push root into sponge')

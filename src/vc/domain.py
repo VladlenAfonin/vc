@@ -1,7 +1,13 @@
+import logging
+
 import galois
 import numpy as np
 
 from vc.base import is_pow2
+from vc.constants import LOGGER_MATH
+
+
+logger = logging.getLogger(LOGGER_MATH)
 
 
 def construct(field: galois.FieldArray, n: int) -> galois.Array:

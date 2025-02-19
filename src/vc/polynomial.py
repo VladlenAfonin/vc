@@ -2,8 +2,10 @@ import logging
 import galois
 import numpy
 
+from vc.constants import LOGGER_MATH
 
-logger = logging.getLogger('vc')
+
+logger = logging.getLogger(LOGGER_MATH)
 
 
 def quotient(g: galois.Poly, xs: galois.Array) -> galois.Poly:

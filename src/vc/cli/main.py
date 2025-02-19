@@ -6,11 +6,12 @@ import argparse
 
 import galois
 
+from vc.constants import LOGGER_FRI
 from vc.prover import Prover
 from vc.parameters import FriParameters
 
 
-logger = logging.getLogger('vc')
+logger = logging.getLogger(LOGGER_FRI)
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -27,7 +28,7 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc": { "level": "INFO", "handlers": ["stdout"] }
+        "vc.fri": { "level": "DEBUG", "handlers": ["stdout"] }
     }
 }
 

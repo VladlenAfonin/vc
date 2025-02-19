@@ -8,8 +8,10 @@ import typing
 
 import galois
 
+from vc.constants import LOGGER_MATH
 
-logger = logging.getLogger('vc')
+
+logger = logging.getLogger(LOGGER_MATH)
 BYTE_SIZE_BITS = 8
 
 
@@ -20,7 +22,10 @@ class Sponge:
     _read_index: int
     _len: int
 
-    def __init__(self, field: galois.FieldArray, objects: typing.List[typing.Any] = []) -> None:
+    def __init__(
+            self,
+            field: galois.FieldArray,
+            objects: typing.List[typing.Any] = []) -> None:
         logger.debug(f'Sponge.init(): begin')
 
         self._objects = objects
@@ -128,7 +133,12 @@ class Sponge:
         random_number = self._sample_number(self._field.order, until_read_index, n)
         return self._field(random_number)
 
-    def _sample_number(self, upper_bound: int, until_read_index: bool, n: int, postfix: bytes = b'') -> int:
+    def _sample_number(
+            self,
+            upper_bound: int,
+            until_read_index: bool,
+            n: int,
+            postfix: bytes = b'') -> int:
         random_bytes = self._sample(until_read_index, n, postfix=postfix)
 
         accumulator = 0

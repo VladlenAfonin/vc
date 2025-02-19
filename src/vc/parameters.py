@@ -2,8 +2,11 @@ import dataclasses
 import logging
 import math
 
+from vc.base import is_pow2
+from vc.constants import LOGGER_FRI
 
-logger = logging.getLogger('vc')
+
+logger = logging.getLogger(LOGGER_FRI)
 
 
 @dataclasses.dataclass(init=False, slots=True)
@@ -27,6 +30,8 @@ class FriParameters:
     """Security level logarithm."""
     number_of_repetitions: int
     """Number of Verifier checks."""
+    number_of_rounds: int
+    """Number of FRI rounds."""
 
     def __init__(
             self,
@@ -35,7 +40,6 @@ class FriParameters:
             security_level_log: int,
             initial_coefficients_length_log: int,
             final_coefficients_length_log: int) -> None:
-
         logger.debug(f'FriParameters.init(): begin')
 
         assert folding_factor_log > 0, 'folding factor log must be at least 1'
@@ -70,10 +74,18 @@ class FriParameters:
             self.expansion_factor_log)
         logger.debug(f'FriParameters.init(): {self.number_of_repetitions = }')
 
+        self.number_of_rounds = self._get_number_of_rounds(
+            self.initial_coefficients_length,
+            self.final_coefficients_length,
+            self.folding_factor)
+        logger.debug(f'FriParameters.init(): {self.number_of_repetitions = }')
+
         logger.debug(f'FriParameters.init(): end')
 
     @staticmethod
-    def _get_number_of_repetitions(security_level: int, expansion_factor_log: int) -> int:
+    def _get_number_of_repetitions(
+            security_level: int,
+            expansion_factor_log: int) -> int:
         logger.debug(f'FriParameters._get_number_of_repetitions(): begin')
 
         quotient = security_level / expansion_factor_log
@@ -85,3 +97,32 @@ class FriParameters:
         logger.debug(f'FriParameters._get_number_of_repetitions(): end')
 
         return result
+
+    @staticmethod
+    def _get_number_of_rounds(
+            initial_coefficients_length,
+            final_coefficients_length,
+            folding_factor) -> int:
+        logger.debug(f'Prover._get_number_of_rounds(): begin')
+
+        assert is_pow2(initial_coefficients_length), 'initial coefficients length must be a power of two'
+        assert is_pow2(final_coefficients_length), 'final coefficients length must be a power of two'
+        assert is_pow2(folding_factor), 'folding factor must be a power of two'
+
+        current_coefficients_length = initial_coefficients_length
+        accumulator: int = 0
+        while final_coefficients_length < current_coefficients_length:
+            logger.debug(f'Prover._get_number_of_rounds(): current {accumulator = }')
+            current_coefficients_length //= folding_factor
+            accumulator += 1
+
+        # This is done in the STIR codebase. Not sure, why.
+        # Probably this is needed because the initial round is out of the "rounds loop".
+        # Or maybe because the last round does not need the proof.
+        logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
+        accumulator -= 1
+
+        logger.debug(f'Prover._get_number_of_rounds(): final {accumulator = }')
+        logger.debug(f'Prover._get_number_of_rounds(): end')
+
+        return accumulator
