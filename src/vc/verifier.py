@@ -5,6 +5,7 @@ import logging
 
 import galois
 
+from vc import domain
 from vc.constants import LOGGER_FRI, MEKRLE_HASH_ALGORITHM
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
@@ -37,7 +38,9 @@ class Verifier:
         self._parameters = parameters
         logger.debug(f'Verifier.init(): {self._parameters = }')
         sponge = Sponge(parameters.field)
-        self._state = Verifier.State(sponge)
+        self._state = Verifier.State(
+            sponge=sponge,
+            initial_evaluation_domain=parameters.initial_evaluation_domain)
         logger.debug(f'Verifier.init(): {self._state = }')
 
         logger.debug(f'Verifier.init(): end')
@@ -76,12 +79,41 @@ class Verifier:
         logger.debug(f'Verifier.verify(): verify folds')
         logger.debug(f'Verifier.verify(): get folding randomness array')
         folding_randomness_array = []
-        for i in range(self._parameters.number_of_rounds):
+        for i in range(self._parameters.number_of_rounds + 1):
             self._state.sponge.absorb(proof.merkle_roots[i])
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
         logger.debug(f'Verifier.verify(): {folding_randomness_array = }')
-        self._state.sponge.absorb(proof.merkle_roots[-1])
-        logger.debug(f'Verifier.verify(): {folding_randomness_array = }')
+
+        logger.debug(f'Verifier.verify(): get query indices')
+        query_indices_range = self._parameters.initial_evaluation_domain_length
+        logger.debug(f'Verifier.verify(): {query_indices_range = }')
+        query_indices = self._state.sponge.squeeze_indices(
+            self._parameters.number_of_repetitions,
+            query_indices_range)
+        logger.debug(f'Verifier.verify(): {query_indices = }')
+
+        evaluation_domain = self._parameters.initial_evaluation_domain
+        for i in range(self._parameters.number_of_rounds + 1):
+            logger.debug(f'Verifier.verify(): begin iteration {i = }')
+
+            xs = evaluation_domain[query_indices]
+            logger.debug(f'Verifier.verify(): {xs = }')
+            ys = proof.round_proofs[i].evaluations
+            logger.debug(f'Verifier.verify(): {ys = }')
+
+            folded_value = galois.lagrange_poly(xs, ys)(folding_randomness_array[i])
+            logger.debug(f'Verifier.verify(): {folded_value = }')
+
+            query_indices_range //= self._parameters.folding_factor
+            logger.debug(f'Verifier.verify(): {query_indices_range = }')
+            query_indices = list(set(i % query_indices_range for i in query_indices))
+            logger.debug(f'Verifier.verify(): {query_indices = }')
+            evaluation_domain = domain.fold(evaluation_domain, self._parameters.folding_factor)
+
+            logger.debug(f'Verifier.verify(): end iteration {i = }')
+
+        computed_answers = proof.final_polynomial(evaluation_domain[query_indices])
+        logger.debug(f'Verifier.verify(): {computed_answers = }')
 
         logger.debug(f'Verifier.verify(): end')
         return True

@@ -64,7 +64,7 @@ class Prover:
             self.offset = options.offset
             logger.debug(f'Prover.State.init(): {self.offset = }')
 
-            self.evaluation_domain = field([self.offset * (self.omega ** i) for i in range(domain_length)])
+            self.evaluation_domain = options.initial_evaluation_domain
             logger.debug(f'Prover.State.init(): {self.evaluation_domain = }')
 
             self.sponge = Sponge(field)
@@ -183,7 +183,7 @@ class Prover:
                 self._state.merkle_roots[i + 1],
                 round_proofs[i + 1].proofs), 'generated invalid merkle proof'
 
-        # As far as I understand, final polynomial does not need any proofs.
+        # As far as I understand, the final polynomial does not need any proofs.
         final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = polynomial.fold(
             self._state.polynomial,

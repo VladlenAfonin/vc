@@ -28,6 +28,10 @@ class FriParameters:
     """Number of coefficients in final polynomial logarithm."""
     final_coefficients_length: int
     """Number of coefficients in final polynomial."""
+    initial_evaluation_domain_length: int
+    """Length of the initial evaluation domain."""
+    initial_evaluation_domain: galois.Array
+    """Initial evaluation domain."""
     security_level: int
     """Security level logarithm."""
     number_of_repetitions: int
@@ -92,12 +96,18 @@ class FriParameters:
         self.field = field
         logger.debug(f'FriParameters.init(): {self.field = }')
 
-        self.omega = field.primitive_root_of_unity(
-            self.initial_coefficients_length * self.expansion_factor)
+        self.initial_evaluation_domain_length = self.initial_coefficients_length * self.expansion_factor
+        logger.debug(f'FriParameters.init(): {self.initial_evaluation_domain_length = }')
+
+        self.omega = field.primitive_root_of_unity(self.initial_evaluation_domain_length)
         logger.debug(f'FriParameters.init(): {self.omega = }')
 
         self.offset = field.primitive_element
         logger.debug(f'FriParameters.init(): {self.offset = }')
+
+        self.initial_evaluation_domain = field(
+            [self.offset * (self.omega ** i) for i in range(self.initial_evaluation_domain_length)])
+        logger.debug(f'FriParameters.init(): {self.initial_evaluation_domain = }')
 
         logger.debug(f'FriParameters.init(): end')
 
