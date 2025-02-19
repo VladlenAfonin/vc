@@ -9,6 +9,7 @@ import galois
 from vc.constants import LOGGER_FRI
 from vc.prover import Prover
 from vc.parameters import FriParameters
+from vc.verifier import Verifier
 
 
 logger = logging.getLogger(LOGGER_FRI)
@@ -28,7 +29,7 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc.fri": { "level": "DEBUG", "handlers": ["stdout"] }
+        "vc": { "level": "DEBUG", "handlers": ["stdout"] }
     }
 }
 
@@ -147,7 +148,8 @@ def main() -> int:
         expansion_factor_log=options.expansion_factor_log,
         security_level_log=options.security_level_log,
         final_coefficients_length_log=options.final_degree_log,
-        initial_coefficients_length_log=options.initial_degree_log)
+        initial_coefficients_length_log=options.initial_degree_log,
+        field=field)
     logger.info(f'main(): {fri_parameters = }')
 
     prover = Prover(fri_parameters)
@@ -155,6 +157,9 @@ def main() -> int:
     logger.info(f'main(): {proof = }')
 
     # TODO: Initialize Verifier.
+    verifier = Verifier(fri_parameters)
+    verification_result = verifier.verify(proof)
+    logger.info(f'main(): {verification_result = }')
 
     return 0
 

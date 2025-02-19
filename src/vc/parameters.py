@@ -2,6 +2,8 @@ import dataclasses
 import logging
 import math
 
+import galois
+
 from vc.base import is_pow2
 from vc.constants import LOGGER_FRI
 
@@ -32,6 +34,8 @@ class FriParameters:
     """Number of Verifier checks."""
     number_of_rounds: int
     """Number of FRI rounds."""
+    field: galois.FieldArray
+    """Field."""
 
     def __init__(
             self,
@@ -39,7 +43,8 @@ class FriParameters:
             expansion_factor_log: int,
             security_level_log: int,
             initial_coefficients_length_log: int,
-            final_coefficients_length_log: int) -> None:
+            final_coefficients_length_log: int,
+            field: galois.FieldArray) -> None:
         logger.debug(f'FriParameters.init(): begin')
 
         assert folding_factor_log > 0, 'folding factor log must be at least 1'
@@ -80,6 +85,9 @@ class FriParameters:
             self.folding_factor)
         logger.debug(f'FriParameters.init(): {self.number_of_repetitions = }')
 
+        self.field = field
+        logger.debug(f'FriParameters.init(): {self.field = }')
+
         logger.debug(f'FriParameters.init(): end')
 
     @staticmethod
@@ -116,9 +124,9 @@ class FriParameters:
             current_coefficients_length //= folding_factor
             accumulator += 1
 
-        # This is done in the STIR codebase. Not sure, why.
-        # Probably this is needed because the initial round is out of the "rounds loop".
-        # Or maybe because the last round does not need the proof.
+        # This is done in the STIR codebase. Not sure, why exactly.
+        # Probably this is needed there because the initial round is out of the "rounds loop".
+        # Or maybe because the last round does not need the proof. This is my use-case.
         logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
         accumulator -= 1
 

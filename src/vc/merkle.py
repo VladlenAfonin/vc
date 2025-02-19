@@ -17,7 +17,7 @@ logger = logging.getLogger(LOGGER_MATH)
 class MerkleTree:
     _tree: pymerkle.BaseMerkleTree
 
-    def __init__(self, algorithm='sha3_512'):
+    def __init__(self, algorithm='sha3_256'):
         logger.debug(f'MerkleTree.init(): begin')
         logger.debug(f'MerkleTree.init(): create InmemoryTree with {algorithm = }')
         self._tree = pymerkle.InmemoryTree(algorithm=algorithm)
@@ -69,12 +69,40 @@ class MerkleTree:
 
         return proofs
 
-    def verify_field_element(self, field_element, root, proof) -> bool:
+    def verify_field_element(
+            self,
+            field_element: galois.FieldArray,
+            root: bytes,
+            proof: pymerkle.MerkleProof) -> bool:
+        logger.debug(f'MerkleTree.verify_field_element(): begin')
+        logger.debug(f'MerkleTree.verify_field_element(): {field_element = }')
+        logger.debug(f'MerkleTree.verify_field_element(): {root = }')
+        logger.debug(f'MerkleTree.verify_field_element(): {proof = }')
+
         field_element_bytes = pickle.dumps(field_element)
         base = self._tree.hash_buff(field_element_bytes)
 
         try:
             pymerkle.verify_inclusion(base, root, proof)
-            return True
+            result = True
         except pymerkle.InvalidProof:
-            return False
+            result = False
+
+        logger.debug(f'MerkleTree.verify_field_element(): {result = }')
+        logger.debug(f'MerkleTree.verify_field_element(): end')
+        return result
+
+    def verify_field_elements(
+            self,
+            field_elements: galois.FieldArray,
+            root: bytes,
+            proofs: typing.List[pymerkle.MerkleProof]) -> bool:
+        logger.debug(f'MerkleTree.verify_field_elements(): begin')
+
+        result = all(
+            self.verify_field_element(field_element, root, proof)
+            for field_element, proof in zip(field_elements, proofs))
+
+        logger.debug(f'MerkleTree.verify_field_elements(): end')
+
+        return result

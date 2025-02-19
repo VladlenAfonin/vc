@@ -1,2 +1,4 @@
 LOGGER_FRI = 'vc.fri'
 LOGGER_MATH = 'vc.math'
+
+MEKRLE_HASH_ALGORITHM = 'sha3_256'
