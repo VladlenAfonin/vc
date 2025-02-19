@@ -129,7 +129,7 @@ class Prover:
         self._state.merkle_roots.append(merkle_root)
 
         logger.debug(f'Prover.prove(): push root into sponge')
-        self._state.sponge.push(merkle_root)
+        self._state.sponge.absorb(merkle_root)
 
         logger.debug(f'Prover.prove(): append merkle tree to the list of merkle trees')
         self._state.merkle_trees.append(merkle_tree)
@@ -143,7 +143,7 @@ class Prover:
         logger.debug(f'Prover.prove(): sample query indices')
         query_indices_range = self._options.initial_coefficients_length
         logger.debug(f'Prover.prove(): {query_indices_range = }')
-        query_indices = self._state.sponge.sample_indices_prover(
+        query_indices = self._state.sponge.squeeze_indices(
             self._options.number_of_repetitions,
             query_indices_range)
         logger.debug(f'Prover.prove(): {query_indices = }')
@@ -184,7 +184,7 @@ class Prover:
                 round_proofs[i + 1].proofs), 'generated invalid merkle proof'
 
         # As far as I understand, final polynomial does not need any proofs.
-        final_randomness = self._state.sponge.sample_field_prover()
+        final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = polynomial.fold(
             self._state.polynomial,
             final_randomness,
@@ -202,7 +202,8 @@ class Prover:
 
         assert self._state is not None, 'state is not initialized'
 
-        verifier_randomness = self._state.sponge.sample_field_prover()
+        logger.debug(f'Prover._round(): sample verifier randomness')
+        verifier_randomness = self._state.sponge.squeeze_field_element()
         logger.debug(f'Prover._round(): {verifier_randomness = }')
 
         new_polynomial = polynomial.fold(
@@ -235,7 +236,7 @@ class Prover:
         self._state.merkle_roots.append(merkle_root)
 
         logger.debug(f'Prover._round(): push root into sponge')
-        self._state.sponge.push(merkle_root)
+        self._state.sponge.absorb(merkle_root)
 
         logger.debug(f'Prover._round(): set new polynomial')
         self._state.polynomial = new_polynomial

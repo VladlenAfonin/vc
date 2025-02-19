@@ -19,7 +19,6 @@ BYTE_SIZE_BITS = 8
 class Sponge:
     _field: galois.FieldArray
     _objects: typing.List[object]
-    _read_index: int
     _len: int
 
     def __init__(
@@ -28,118 +27,90 @@ class Sponge:
             objects: typing.List[typing.Any] = []) -> None:
         logger.debug(f'Sponge.init(): begin')
 
-        self._objects = objects
+        # MAYBE: Investigate, why this line uses existing objects from the Sponge created earlier.
+        # self._objects = objects
+
+        self._objects = []
         logger.debug(f'Sponge.init(): {self._objects = }')
 
         self._field = field
         logger.debug(f'Sponge.init(): {self._field = }')
-
-        self._read_index = 0
-        logger.debug(f'Sponge.init(): {self._read_index = }')
 
         self._len = 0
         logger.debug(f'Sponge.init(): {self._len = }')
 
         logger.debug(f'Sponge.init(): end')
 
-    def serialize(self, until_read_index: bool = False) -> bytes:
-        data_to_serialize = self._objects[:self._read_index] \
-            if until_read_index else self._objects
-        return pickle.dumps(data_to_serialize)
+    def serialize(self) -> bytes:
+        return pickle.dumps(self._objects)
 
-    @staticmethod
-    def from_data(field: galois.FieldArray, data: bytes) -> Sponge:
-        objects = pickle.loads(data)
-        return Sponge(field, objects=objects)
-
-    def push(self, obj: typing.Any) -> None:
+    def absorb(self, obj: typing.Any) -> None:
         """Push data to the proof stream."""
 
         self._len += 1
         self._objects.append(obj)
 
-    def pull[T](self) -> T:
-        """Get next element from the proof stream."""
-
-        assert self._read_index < self._len, 'no more data to read'
-
-        result = self._objects[self._read_index]
-        self._read_index += 1
-        return result
-
-    def sample_prover(self, n: int = 32) -> bytes:
+    def squeeze(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the prover."""
-        return self._sample(False, n)
+        return self._squeeze(n)
 
-    def sample_verifier(self, n: int = 32) -> bytes:
-        """Sample random data. This function is to be called by the verifier."""
-        return self._sample(True, n)
-
-    def sample_field_prover(self, n: int = 32) -> galois.FieldArray:
+    def squeeze_field_element(self, n: int = 32) -> galois.FieldArray:
         """Sample random field element. This function is to be called by the prover."""
-        return self._sample_field(False, n)
+        return self._squeeze_field_element(n)
 
-    def sample_field_verifier(self, n: int = 32) -> galois.FieldArray:
-        """Sample random field element. This function is to be called by the prover."""
-        return self._sample_field(True, n)
+    def squeeze_index(self, upper_bound, n: int = 32) -> int:
+        return self._squeeze_number(upper_bound, n)
 
-    def sample_index_prover(self, upper_bound, n: int = 32) -> int:
-        return self._sample_number(upper_bound, False, n)
-
-    def sample_index_verifier(self, upper_bound, n: int = 32) -> int:
-        return self._sample_number(upper_bound, True, n)
-
-    def sample_indices_prover(self, amount: int, upper_bound, n: int = 32) -> typing.List[int]:
+    def squeeze_indices(self, amount: int, upper_bound, n: int = 32) -> typing.List[int]:
         """Sample an array of distinct random numbers up to upper bound."""
 
-        logger.debug(f'Sponge.sample_indices_prover(): begin')
-        logger.debug(f'Sponge.sample_indices_prover(): {amount = }')
-        logger.debug(f'Sponge.sample_indices_prover(): {upper_bound = }')
-        logger.debug(f'Sponge.sample_indices_prover(): {n = }')
+        logger.debug(f'Sponge.squeeze_indices(): begin')
+        logger.debug(f'Sponge.squeeze_indices(): {amount = }')
+        logger.debug(f'Sponge.squeeze_indices(): {upper_bound = }')
+        logger.debug(f'Sponge.squeeze_indices(): {n = }')
 
         assert amount <= upper_bound, 'not enough integers to sample indices from'
 
         if amount == upper_bound:
-            logger.debug(f'Sponge.sample_indices_prover(): return all numbers up to upper bound')
+            logger.debug(f'Sponge.squeeze_indices(): return all numbers up to upper bound')
             return list(range(upper_bound))
  
-        logger.debug(f'Sponge.sample_indices_prover(): sample random numbers')
+        logger.debug(f'Sponge.squeeze_indices(): sample random numbers')
         result = []
         i = 0
         result_length = 0
         while result_length < amount:
-            logger.debug(f'Sponge.sample_indices_prover(): begin intermediate iteration {i = }')
-            random_number = self._sample_number(upper_bound, False, n, postfix=bytes(i))
-            logger.debug(f'Sponge.sample_indices_prover(): intermediate {random_number = }')
+            logger.debug(f'Sponge.squeeze_indices(): begin intermediate iteration {i = }')
+            random_number = self._squeeze_number(upper_bound, n, postfix=bytes(i))
+            logger.debug(f'Sponge.squeeze_indices(): intermediate {random_number = }')
             if random_number not in result:
-                logger.debug(f'Sponge.sample_indices_prover(): intermediate appending {random_number = }')
+                logger.debug(f'Sponge.squeeze_indices(): intermediate appending {random_number = }')
                 result_length += 1
-                logger.debug(f'Sponge.sample_indices_prover(): intermediate {result_length = }')
+                logger.debug(f'Sponge.squeeze_indices(): intermediate {result_length = }')
                 result.append(random_number)
-                logger.debug(f'Sponge.sample_indices_prover(): intermediate {result = }')
+                logger.debug(f'Sponge.squeeze_indices(): intermediate {result = }')
             else:
-                logger.debug(f'Sponge.sample_indices_prover(): intermediate skipping {random_number = }')
+                logger.debug(f'Sponge.squeeze_indices(): intermediate skipping {random_number = }')
 
-            logger.debug(f'Sponge.sample_indices_prover(): end intermediate iteration {i = }')
+            logger.debug(f'Sponge.squeeze_indices(): end intermediate iteration {i = }')
             i += 1
 
-        logger.debug(f'Sponge.sample_indices_prover(): final {result_length = }')
-        logger.debug(f'Sponge.sample_indices_prover(): final {result = }')
-        logger.debug(f'Sponge.sample_indices_prover(): end')
+        logger.debug(f'Sponge.squeeze_indices(): final {result_length = }')
+        logger.debug(f'Sponge.squeeze_indices(): final {result = }')
+        logger.debug(f'Sponge.squeeze_indices(): end')
 
         return result
 
-    def _sample_field(self, until_read_index: bool, n: int):
-        random_number = self._sample_number(self._field.order, until_read_index, n)
+    def _squeeze_field_element(self, n: int):
+        random_number = self._squeeze_number(self._field.order, n)
         return self._field(random_number)
 
-    def _sample_number(
+    def _squeeze_number(
             self,
             upper_bound: int,
-            until_read_index: bool,
             n: int,
             postfix: bytes = b'') -> int:
-        random_bytes = self._sample(until_read_index, n, postfix=postfix)
+        random_bytes = self._squeeze(n, postfix=postfix)
 
         accumulator = 0
         for random_byte in random_bytes:
@@ -147,10 +118,15 @@ class Sponge:
 
         return accumulator % upper_bound
 
-    def _sample(self, until_read_index: bool, n: int, postfix: bytes = b'') -> bytes:
+    def _squeeze(self, n: int, postfix: bytes = b'') -> bytes:
         """Fiat-Shamir sampling base on current verifier view."""
 
-        current_verifier_view = self.serialize(until_read_index)
+        logger.debug(f'Sponge._squeeze(): begin')
+        logger.debug(f'Sponge._squeeze(): {self._objects = }')
+
+        current_verifier_view = self.serialize()
         result = hashlib.shake_256(current_verifier_view + postfix).digest(n)
+
+        logger.debug(f'Sponge._squeeze(): end')
 
         return result
