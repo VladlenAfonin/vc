@@ -30,6 +30,10 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     return result
 
 
+def stack(evaluations: galois.Array, folding_factor: int) -> galois.Array:
+    return evaluations.reshape((folding_factor, -1)).swapaxes(0, 1)
+
+
 def fold(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
     # TODO: This function fails if the polynomial being passed is constant.
     #       This can happen after folding.
