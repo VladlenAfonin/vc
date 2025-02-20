@@ -7,10 +7,11 @@ import typing
 import galois
 import pymerkle
 
-from vc.constants import LOGGER_MATH
+from vc.constants import LOGGER_MATH, MEKRLE_HASH_ALGORITHM
 
 
 logger = logging.getLogger(LOGGER_MATH)
+hash_buff = pymerkle.InmemoryTree(MEKRLE_HASH_ALGORITHM).hash_buff
 
 
 @dataclasses.dataclass(init=False, slots=True)
@@ -35,6 +36,26 @@ class MerkleTree:
             self._tree.append_entry(field_element_bytes)
 
         logger.debug(f'MerkleTree.append_field_elements(): end')
+
+    def append_single(self, field_elements: galois.FieldArray):
+        field_elements_bytes = pickle.dumps(field_elements)
+        self._tree.append_entry(field_elements_bytes)
+
+    def append_stacked(self, stack: galois.FieldArray):
+        for row in stack:
+            self.append_single(row)
+
+    @staticmethod
+    def verify_single(field_elements: galois.FieldArray, root: bytes, proof: pymerkle.MerkleProof):
+        base = hash_buff(field_elements)
+
+        try:
+            pymerkle.verify_inclusion(base, root, proof)
+            result = True
+        except pymerkle.InvalidProof:
+            result = False
+
+        return result
 
     def append_field_element(self, field_element: galois.FieldArray):
         logger.debug(f'MerkleTree.append_field_element(): begin')
