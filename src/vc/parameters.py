@@ -53,87 +53,46 @@ class FriParameters:
             initial_coefficients_length_log: int,
             final_coefficients_length_log: int,
             field: galois.FieldArray) -> None:
-        logger.debug(f'FriParameters.init(): begin')
-
         assert folding_factor_log > 0, 'folding factor log must be at least 1'
         assert expansion_factor_log > 0, 'expansion factor log must be at least 1'
 
+        self.field = field
         self.folding_factor = 1 << folding_factor_log
-        logger.debug(f'FriParameters.init(): {self.folding_factor = }')
-
         self.expansion_factor_log = expansion_factor_log
-        logger.debug(f'FriParameters.init(): {self.expansion_factor_log = }')
-
         self.expansion_factor = 1 << expansion_factor_log
-        logger.debug(f'FriParameters.init(): {self.expansion_factor = }')
-
         self.security_level = 1 << security_level_log
-        logger.debug(f'FriParameters.init(): {self.security_level = }')
-
         self.initial_coefficients_length_log = initial_coefficients_length_log
-        logger.debug(f'FriParameters.init(): {self.initial_coefficients_length_log = }')
-
         self.initial_coefficients_length = 1 << initial_coefficients_length_log
-        logger.debug(f'FriParameters.init(): {self.initial_coefficients_length = }')
-
         self.final_coefficients_length_log = final_coefficients_length_log
-        logger.debug(f'FriParameters.init(): {self.final_coefficients_length_log = }')
-
         self.final_coefficients_length = 1 << final_coefficients_length_log
-        logger.debug(f'FriParameters.init(): {self.final_coefficients_length = }')
+        self.initial_evaluation_domain_length = self.initial_coefficients_length * self.expansion_factor
+
+        self.offset = field.primitive_element
+        self.omega = field.primitive_root_of_unity(self.initial_evaluation_domain_length)
+        self.initial_evaluation_domain = field(
+            [self.offset * (self.omega ** i) for i in range(self.initial_evaluation_domain_length)])
 
         self.number_of_repetitions = self._get_number_of_repetitions(
             self.security_level,
             self.expansion_factor_log)
-        logger.debug(f'FriParameters.init(): {self.number_of_repetitions = }')
 
         self.number_of_rounds = self._get_number_of_rounds(
             self.initial_coefficients_length,
             self.final_coefficients_length,
             self.folding_factor)
-        logger.debug(f'FriParameters.init(): {self.number_of_repetitions = }')
-
-        self.field = field
-        logger.debug(f'FriParameters.init(): {self.field = }')
-
-        self.initial_evaluation_domain_length = self.initial_coefficients_length * self.expansion_factor
-        logger.debug(f'FriParameters.init(): {self.initial_evaluation_domain_length = }')
-
-        self.omega = field.primitive_root_of_unity(self.initial_evaluation_domain_length)
-        logger.debug(f'FriParameters.init(): {self.omega = }')
-
-        self.offset = field.primitive_element
-        logger.debug(f'FriParameters.init(): {self.offset = }')
-
-        self.initial_evaluation_domain = field(
-            [self.offset * (self.omega ** i) for i in range(self.initial_evaluation_domain_length)])
-        logger.debug(f'FriParameters.init(): {self.initial_evaluation_domain = }')
-
-        logger.debug(f'FriParameters.init(): end')
 
     @staticmethod
     def _get_number_of_repetitions(
             security_level: int,
             expansion_factor_log: int) -> int:
-        logger.debug(f'FriParameters._get_number_of_repetitions(): begin')
-
         quotient = security_level / expansion_factor_log
-        logger.debug(f'FriParameters._get_number_of_repetitions(): {quotient = }')
-
-        result = math.ceil(quotient)
-        logger.debug(f'FriParameters._get_number_of_repetitions(): {result = }')
-
-        logger.debug(f'FriParameters._get_number_of_repetitions(): end')
-
-        return result
+        return math.ceil(quotient)
 
     @staticmethod
     def _get_number_of_rounds(
             initial_coefficients_length,
             final_coefficients_length,
             folding_factor) -> int:
-        logger.debug(f'Prover._get_number_of_rounds(): begin')
-
         assert is_pow2(initial_coefficients_length), 'initial coefficients length must be a power of two'
         assert is_pow2(final_coefficients_length), 'final coefficients length must be a power of two'
         assert is_pow2(folding_factor), 'folding factor must be a power of two'
@@ -141,17 +100,12 @@ class FriParameters:
         current_coefficients_length = initial_coefficients_length
         accumulator: int = 0
         while final_coefficients_length < current_coefficients_length:
-            logger.debug(f'Prover._get_number_of_rounds(): current {accumulator = }')
             current_coefficients_length //= folding_factor
             accumulator += 1
 
         # This is done in the STIR codebase. Not sure, why exactly.
         # Probably this is needed there because the initial round is out of the "rounds loop".
         # Or maybe because the last round does not need the proof. This is my use-case.
-        logger.debug(f'Prover._get_number_of_rounds(): subtract 1 from accumulator')
         accumulator -= 1
-
-        logger.debug(f'Prover._get_number_of_rounds(): final {accumulator = }')
-        logger.debug(f'Prover._get_number_of_rounds(): end')
 
         return accumulator

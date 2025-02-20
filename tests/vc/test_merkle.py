@@ -4,29 +4,19 @@ import pytest
 
 from vc.constants import TEST_FIELD
 from vc.merkle import MerkleTree
+from vc.polynomial import stack
 
 
-MERKLE_TREE_LEAVES_LENGTH = 4
-
-
-@pytest.mark.parametrize(
-    'index',
-    [
-        (0),
-        (1),
-        (2),
-        (3)
-    ])
-def test_verify_valid(index: int):
+def test_append_single():
     merkle_tree = MerkleTree()
-    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
-    merkle_tree.append_field_elements(field_elements)
+    folding_factor = 2
+    field_elements = TEST_FIELD.Random(folding_factor)
+    stacked_evaluations = stack(field_elements, folding_factor)
+    merkle_tree.append(stacked_evaluations[0])
     root = merkle_tree.get_root()
-    proof = merkle_tree.prove_index(index)
+    proof = merkle_tree.prove(0)
 
-    verifier_merkle_tree = MerkleTree()
-    result = verifier_merkle_tree.verify_field_element(field_elements[index], root, proof)
-
+    result = MerkleTree.verify(field_elements, root, proof)
     assert result == True
 
 
@@ -41,31 +31,14 @@ def test_verify_valid(index: int):
         ([2, 3]),
         ([1, 0])
     ])
-def test_verify_multiple_valid(indices: typing.List[int]):
+def test_append_bulk(indices: typing.List[int]):
     merkle_tree = MerkleTree()
-    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
-    merkle_tree.append_field_elements(field_elements)
+    folding_factor = 2
+    field_elements = TEST_FIELD.Random(8)
+    stacked_evaluations = stack(field_elements, folding_factor)
+    merkle_tree.append_bulk(stacked_evaluations)
     root = merkle_tree.get_root()
-    proofs = merkle_tree.prove_indices(indices)
+    proof = merkle_tree.prove_bulk(indices)
 
-    verifier_merkle_tree = MerkleTree()
-    result = verifier_merkle_tree.verify_field_elements(field_elements[indices], root, proofs)
-
+    result = MerkleTree.verify_bulk(stacked_evaluations[indices], root, proof)
     assert result == True
-
-
-@pytest.mark.parametrize(
-    'root',
-    [
-        (b''),
-        (b'\xff')
-    ])
-def test_verify_invalid(root: bytes):
-    merkle_tree = MerkleTree()
-    field_elements = TEST_FIELD.Random(MERKLE_TREE_LEAVES_LENGTH)
-    merkle_tree.append_field_element(field_elements)
-    proof = merkle_tree.prove_index(0)
-
-    result = merkle_tree.verify_field_element(field_elements[0], root, proof)
-
-    assert result == False

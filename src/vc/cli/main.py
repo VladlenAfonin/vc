@@ -18,7 +18,7 @@ logging_config = {
     "disable_existing_loggers": False,
     "formatters": {
         "simple": {
-            "format": "%(levelname)s:%(name)s:%(message)s"
+            "format": "%(levelname)s:%(name)s:%(funcName)s():%(message)s"
         }
     },
     "handlers": {
@@ -71,7 +71,7 @@ def parse_arguments() -> Options:
         dest='expansion_factor_log',
         help='expansion factor',
         nargs='+',
-        default=0,
+        default=1,
         required=False,
         metavar='FACTOR',
         type=int)
@@ -133,15 +133,10 @@ def main() -> int:
     logging.config.dictConfig(logging_config)
 
     options = parse_arguments()
-    logger.info(f'main(): {options = }')
 
-    logger.debug(f'main(): create field')
     field = galois.GF(options.field)
-    logger.debug(f'main(): {field = }')
 
-    logger.debug(f'main(): create random polynomial')
     g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
-    logger.info(f'main(): created random polynomial {g = }')
 
     fri_parameters = FriParameters(
         folding_factor_log=options.folding_factor_log,
@@ -150,16 +145,16 @@ def main() -> int:
         final_coefficients_length_log=options.final_degree_log,
         initial_coefficients_length_log=options.initial_degree_log,
         field=field)
-    logger.info(f'main(): {fri_parameters = }')
+
+    logger.info(f'{fri_parameters = }')
 
     prover = Prover(fri_parameters)
     proof = prover.prove(g)
-    logger.info(f'main(): {proof = }')
+    logger.info(f'{proof = }')
 
-    # TODO: Initialize Verifier.
     verifier = Verifier(fri_parameters)
     verification_result = verifier.verify(proof)
-    logger.info(f'main(): {verification_result = }')
+    logger.info(f'{verification_result = }')
 
     return 0
 

@@ -43,45 +43,21 @@ class Prover:
         """Merkle root of current evaluations."""
 
         def __init__(self, f: galois.Poly, options: FriParameters) -> None:
-            logger.debug('Prover.State.init(): begin')
-
             coefficients_length = f.degree + 1
-            logger.debug(f'Prover.State.init(): {coefficients_length = }')
-
             assert is_pow2(coefficients_length), 'number of coefficients in polynomial must be a power of two'
 
             self.polynomial = f
-            logger.debug(f'Prover.State.init(): {f = }')
-
             field = f.field
 
-            domain_length = coefficients_length * options.expansion_factor
-            logger.debug(f'Prover.State.init(): {domain_length = }')
-
             self.omega = options.omega
-            logger.debug(f'Prover.State.init(): {self.omega = }')
-
             self.offset = options.offset
-            logger.debug(f'Prover.State.init(): {self.offset = }')
-
             self.evaluation_domain = options.initial_evaluation_domain
-            logger.debug(f'Prover.State.init(): {self.evaluation_domain = }')
-
             self.sponge = Sponge(field)
-            logger.debug(f'Prover.State.init(): initialized empty Sponge')
-
             self.merkle_trees = []
-            logger.debug(f'Prover.State.init(): initialized empty merkle tree array')
-
             self.merkle_roots = []
-            logger.debug(f'Prover.State.init(): initialized empty merkle roots array')
-
             self.evaluations = []
-            logger.debug(f'Prover.State.init(): initialized empty evaluations array')
 
-            logger.debug('Prover.State.init(): end')
-
-    _options: FriParameters
+    _parameters: FriParameters
     """Public Prover options."""
     _state: Prover.State | None
     """Internal Prover state."""
@@ -92,14 +68,10 @@ class Prover:
         :param options: Public prover options.
         """
 
-        logger.debug(f'Prover.init(): begin')
-
         assert options is not None, 'options cannot be None'
 
-        self._options = options
+        self._parameters = options
         self._state = None
-
-        logger.debug(f'Prover.init(): end')
 
     def prove(self, f: galois.Poly) -> Proof:
         """Prover that polynomial f is close to RS-code.
@@ -107,140 +79,74 @@ class Prover:
         :param f: Polynomial to be proven.
         """
 
-        logger.debug(f'Prover.prove(): begin')
+        self._state = Prover.State(f, self._parameters)
 
-        logger.debug(f'Prover.prove(): create prover state')
-        self._state = Prover.State(f, self._options)
-
-        logger.debug(f'Prover.prove(): compute initial evaluations')
         initial_round_evaluations = self._state.polynomial(self._state.evaluation_domain)
-        logger.debug(f'Prover.prove(): {initial_round_evaluations = }')
+        stacked_evaluations = polynomial.stack(initial_round_evaluations, self._parameters.folding_factor)
+        self._state.evaluations.append(stacked_evaluations)
 
-        logger.debug(f'Prover.prove(): append evaluations to evaluations list')
-        self._state.evaluations.append(initial_round_evaluations)
-
-        logger.debug(f'Prover.prove(): create merkle tree')
-        merkle_tree = MerkleTree(algorithm=MEKRLE_HASH_ALGORITHM)
-        merkle_tree.append_field_elements(initial_round_evaluations)
-
+        merkle_tree = MerkleTree()
+        merkle_tree.append_bulk(stacked_evaluations)
         merkle_root = merkle_tree.get_root()
 
-        logger.debug(f'Prover.prove(): append initial merkle root to merkle roots list')
-        self._state.merkle_roots.append(merkle_root)
-
-        logger.debug(f'Prover.prove(): push root into sponge')
         self._state.sponge.absorb(merkle_root)
-
-        logger.debug(f'Prover.prove(): append merkle tree to the list of merkle trees')
+        self._state.merkle_roots.append(merkle_root)
         self._state.merkle_trees.append(merkle_tree)
 
-        for i in range(self._options.number_of_rounds):
-            logger.debug(f'Prover.prove(): commit round {i + 1}')
+        for i in range(self._parameters.number_of_rounds):
             self._round()
 
         round_proofs: typing.List[RoundProof] = []
 
-        logger.debug(f'Prover.prove(): sample query indices')
-        query_indices_range = self._options.initial_evaluation_domain_length
-        logger.debug(f'Prover.prove(): {query_indices_range = }')
+        query_indices_range = self._parameters.initial_evaluation_domain_length // self._parameters.folding_factor
         query_indices = self._state.sponge.squeeze_indices(
-            self._options.number_of_repetitions,
+            self._parameters.number_of_repetitions,
             query_indices_range)
-        logger.debug(f'Prover.prove(): {query_indices = }')
-
-        logger.debug(f'Prover.prove(): get initial query evaluations')
         query_evaluations = self._state.evaluations[0][query_indices]
-        logger.debug(f'Prover.prove(): {query_evaluations = }')
 
-        logger.debug(f'Prover.prove(): prove first round')
-        merkle_proofs = self._state.merkle_trees[0].prove_indices(query_indices)
+        merkle_proofs = self._state.merkle_trees[0].prove_bulk(query_indices)
         round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
 
-        # Create an empty Merkle tree used only for verification.
-        verifier_merkle_tree = MerkleTree(algorithm=MEKRLE_HASH_ALGORITHM)
-        assert verifier_merkle_tree.verify_field_elements(
-            round_proofs[0].evaluations,
-            self._state.merkle_roots[0],
-            round_proofs[0].proofs), 'generated invalid merkle proof'
-
-        for i in range(self._options.number_of_rounds):
-            logger.debug(f'Prover.prove(): query round {i + 1}')
-
-            query_indices_range //= self._options.folding_factor
-            logger.debug(f'Prover.prove(): {query_indices_range = }')
-
-            query_indices = list(set(i % query_indices_range for i in query_indices))
-            logger.debug(f'Prover.prove(): {query_indices = }')
-
-            logger.debug(f'Prover.prove(): get initial query evaluations')
+        for i in range(self._parameters.number_of_rounds):
+            query_indices_range //= self._parameters.folding_factor
+            query_indices = list(set(j % query_indices_range for j in query_indices))
             query_evaluations = self._state.evaluations[i + 1][query_indices]
-            logger.debug(f'Prover.prove(): {query_evaluations = }')
 
-            merkle_proofs = self._state.merkle_trees[i + 1].prove_indices(query_indices)
+            merkle_proofs = self._state.merkle_trees[i + 1].prove_bulk(query_indices)
             round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
-            assert verifier_merkle_tree.verify_field_elements(
-                round_proofs[i + 1].evaluations,
-                self._state.merkle_roots[i + 1],
-                round_proofs[i + 1].proofs), 'generated invalid merkle proof'
 
         # As far as I understand, the final polynomial does not need any proofs.
         final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = polynomial.fold(
             self._state.polynomial,
             final_randomness,
-            self._options.folding_factor)
+            self._parameters.folding_factor)
 
-        logger.debug(f'Prover.prove(): finalize the proof')
         result = Proof(round_proofs, self._state.merkle_roots, final_polynomial)
-
-        logger.debug(f'Prover.prove(): end')
 
         return result
 
     def _round(self) -> None:
-        logger.debug(f'Prover._round(): begin')
-
-        assert self._state is not None, 'state is not initialized'
-
-        logger.debug(f'Prover._round(): sample verifier randomness')
         verifier_randomness = self._state.sponge.squeeze_field_element()
-        logger.debug(f'Prover._round(): {verifier_randomness = }')
-
         new_polynomial = polynomial.fold(
             self._state.polynomial,
             verifier_randomness,
-            self._options.folding_factor)
-        logger.debug(f'Prover._round(): {new_polynomial = }')
-
+            self._parameters.folding_factor)
         new_evaluation_domain = domain.fold(
             self._state.evaluation_domain,
-            self._options.folding_factor)
-        logger.debug(f'Prover._round(): {new_evaluation_domain = }')
+            self._parameters.folding_factor)
 
         new_round_evaluations = new_polynomial(new_evaluation_domain)
-        logger.debug(f'Prover._round(): {new_round_evaluations = }')
+        stacked_evaluations = polynomial.stack(new_round_evaluations, self._parameters.folding_factor)
+        self._state.evaluations.append(stacked_evaluations)
 
-        logger.debug(f'Prover._round(): append evaluations to evaluations list')
-        self._state.evaluations.append(new_round_evaluations)
-
-        logger.debug(f'Prover._round(): create merkle tree')
-        merkle_tree = MerkleTree(algorithm=MEKRLE_HASH_ALGORITHM)
-        merkle_tree.append_field_elements(new_round_evaluations)
-
-        logger.debug(f'Prover._round(): append merkle tree to the list of merkle trees')
-        self._state.merkle_trees.append(merkle_tree)
-
+        merkle_tree = MerkleTree()
+        merkle_tree.append_bulk(stacked_evaluations)
         merkle_root = merkle_tree.get_root()
 
-        logger.debug(f'Prover._round(): append merkle root to merkle roots list')
-        self._state.merkle_roots.append(merkle_root)
-
-        logger.debug(f'Prover._round(): push root into sponge')
         self._state.sponge.absorb(merkle_root)
+        self._state.merkle_roots.append(merkle_root)
+        self._state.merkle_trees.append(merkle_tree)
 
-        logger.debug(f'Prover._round(): set new polynomial')
         self._state.polynomial = new_polynomial
-        logger.debug(f'Prover._round(): set new evaluation domain')
         self._state.evaluation_domain = new_evaluation_domain
-
-        logger.debug(f'Prover._round(): end')

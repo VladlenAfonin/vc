@@ -17,98 +17,107 @@ BYTE_SIZE_BITS = 8
 
 @dataclasses.dataclass(init=False, slots=True)
 class Sponge:
+    """Sponge."""
+
     _field: galois.FieldArray
     _objects: typing.List[object]
     _len: int
 
-    def __init__(
-            self,
-            field: galois.FieldArray,
-            objects: typing.List[typing.Any] = []) -> None:
-        logger.debug(f'Sponge.init(): begin')
+    def __init__(self, field: galois.FieldArray) -> None:
+        """Initialize new Sponge.
 
-        # MAYBE: Investigate, why this line uses existing objects from the Sponge created earlier.
-        # self._objects = objects
+        :param field: Field to use when sampling field elements.
+        :type field: galois.FieldArray
+        """
 
         self._objects = []
-        logger.debug(f'Sponge.init(): {self._objects = }')
-
         self._field = field
-        logger.debug(f'Sponge.init(): {self._field = }')
-
         self._len = 0
-        logger.debug(f'Sponge.init(): {self._len = }')
 
-        logger.debug(f'Sponge.init(): end')
+    def _serialize(self) -> bytes:
+        """Serialize current state into byte array."""
 
-    def serialize(self) -> bytes:
         return pickle.dumps(self._objects)
 
     def absorb(self, obj: typing.Any) -> None:
-        """Push data to the proof stream."""
+        """Push data to the proof stream.
 
-        logger.debug(f'Sponge.absorb(): begin')
+        :param obj: Arbitrary data to push.
+        :type obj: typing.Any
+        """
 
         self._len += 1
         self._objects.append(obj)
 
-        logger.debug(f'Sponge.absorb(): new {self._len = }')
-        logger.debug(f'Sponge.absorb(): new {self._objects = }')
-
-        logger.debug(f'Sponge.absorb(): end')
-
     def squeeze(self, n: int = 32) -> bytes:
-        """Sample random data. This function is to be called by the prover."""
+        """Sample random data. This function is to be called by the prover.
+
+        :param n: Number of bytes to squeeze, defaults to 32.
+        :type n: int, optional
+        :return: Squeezed bytes.
+        :rtype: bytes
+        """
+
         return self._squeeze(n)
 
     def squeeze_field_element(self, n: int = 32) -> galois.FieldArray:
         """Sample random field element. This function is to be called by the prover."""
+
         return self._squeeze_field_element(n)
 
-    def squeeze_index(self, upper_bound, n: int = 32) -> int:
+    def squeeze_index(self, upper_bound: int, n: int = 32) -> int:
+        """Squeeze index.
+
+        :param upper_bound: Upper bound.
+        :type upper_bound: int
+        :param n: Number of bytes to use when squeezing, defaults to 32.
+        :type n: int, optional
+        :return: Squeezed index.
+        :rtype: int
+        """
+
         return self._squeeze_number(upper_bound, n)
 
-    def squeeze_indices(self, amount: int, upper_bound, n: int = 32) -> typing.List[int]:
-        """Sample an array of distinct random numbers up to upper bound."""
+    def squeeze_indices(self, amount: int, upper_bound: int, n: int = 32) -> typing.List[int]:
+        """Sample an array of distinct random numbers up to upper bound.
 
-        logger.debug(f'Sponge.squeeze_indices(): begin')
-        logger.debug(f'Sponge.squeeze_indices(): {amount = }')
-        logger.debug(f'Sponge.squeeze_indices(): {upper_bound = }')
-        logger.debug(f'Sponge.squeeze_indices(): {n = }')
+        :param amount: Number of indices to squeeze.
+        :type amount: int
+        :param upper_bound: Upper bound of indices.
+        :type upper_bound: int
+        :param n: Number of bytes to use when squeezing, defaults to 32.
+        :type n: int, optional
+        :return: Array of indices.
+        :rtype: typing.List[int]
+        """
 
         assert amount <= upper_bound, 'not enough integers to sample indices from'
 
         if amount == upper_bound:
-            logger.debug(f'Sponge.squeeze_indices(): return all numbers up to upper bound')
             return list(range(upper_bound))
  
-        logger.debug(f'Sponge.squeeze_indices(): sample random numbers')
         result = []
         i = 0
         result_length = 0
         while result_length < amount:
-            logger.debug(f'Sponge.squeeze_indices(): begin intermediate iteration {i = }')
             random_number = self._squeeze_number(upper_bound, n, postfix=bytes(i))
-            logger.debug(f'Sponge.squeeze_indices(): intermediate {random_number = }')
             if random_number not in result:
-                logger.debug(f'Sponge.squeeze_indices(): intermediate appending {random_number = }')
                 result_length += 1
-                logger.debug(f'Sponge.squeeze_indices(): intermediate {result_length = }')
                 result.append(random_number)
-                logger.debug(f'Sponge.squeeze_indices(): intermediate {result = }')
-            else:
-                logger.debug(f'Sponge.squeeze_indices(): intermediate skipping {random_number = }')
 
-            logger.debug(f'Sponge.squeeze_indices(): end intermediate iteration {i = }')
             i += 1
-
-        logger.debug(f'Sponge.squeeze_indices(): final {result_length = }')
-        logger.debug(f'Sponge.squeeze_indices(): final {result = }')
-        logger.debug(f'Sponge.squeeze_indices(): end')
 
         return result
 
-    def _squeeze_field_element(self, n: int):
+    def _squeeze_field_element(self, n: int) -> galois.Array:
+        """Squeeze a field element.
+
+        :param n: Number of bytes to use when squeezing.
+        :type n: int
+        :return: Field element.
+        :rtype: galois.Array
+        """
+
         random_number = self._squeeze_number(self._field.order, n)
         return self._field(random_number)
 
@@ -117,6 +126,18 @@ class Sponge:
             upper_bound: int,
             n: int,
             postfix: bytes = b'') -> int:
+        """Squeeze a number.
+
+        :param upper_bound: Upper bound.
+        :type upper_bound: int
+        :param n: Number of bytes to squeeze from the hash function.
+        :type n: int
+        :param postfix: Postfix to add when squeezing, defaults to b''.
+        :type postfix: bytes, optional
+        :return: Squeezed number.
+        :rtype: int
+        """
+
         random_bytes = self._squeeze(n, postfix=postfix)
 
         accumulator = 0
@@ -126,14 +147,18 @@ class Sponge:
         return accumulator % upper_bound
 
     def _squeeze(self, n: int, postfix: bytes = b'') -> bytes:
-        """Fiat-Shamir sampling base on current verifier view."""
+        """Squeeze bytes.
+        This uses Fiat-Shamir sampling base on current verifier view.
+        
+        :param n: Number of bytes to squeeze.
+        :type n: int
+        :param postfix: Additional postfix to use when sampling.
+        :type postfix: bytes
+        :return: Squeezed bytes.
+        :rtype: bytes
+        """
 
-        logger.debug(f'Sponge._squeeze(): begin')
-        logger.debug(f'Sponge._squeeze(): {self._objects = }')
-
-        current_verifier_view = self.serialize()
-        result = hashlib.shake_256(current_verifier_view + postfix).digest(n)
-
-        logger.debug(f'Sponge._squeeze(): end')
+        current_state = self._serialize()
+        result = hashlib.shake_256(current_state + postfix).digest(n)
 
         return result
