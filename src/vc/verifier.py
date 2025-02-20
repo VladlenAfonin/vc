@@ -107,7 +107,8 @@ class Verifier:
             ys = proof.round_proofs[i].evaluations
             logger.debug(f'Verifier.verify(): {ys = }')
 
-            folded_values = galois.lagrange_poly(xs, ys)(folding_randomness_array[i])
+            folded_polynomial = galois.lagrange_poly(xs, ys)
+            folded_values = folded_polynomial(folding_randomness_array[i])
             logger.debug(f'Verifier.verify(): {folded_values = }')
 
             # folded_values = []
@@ -124,8 +125,8 @@ class Verifier:
 
             logger.debug(f'Verifier.verify(): end iteration {i = }')
 
-        computed_answers = proof.final_polynomial(evaluation_domain[query_indices])
-        logger.debug(f'Verifier.verify(): {computed_answers = }')
+        final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
+        logger.debug(f'Verifier.verify(): {final_polynomial_answers = }')
 
         logger.debug(f'Verifier.verify(): end')
         return True

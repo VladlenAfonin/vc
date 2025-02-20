@@ -71,7 +71,7 @@ def parse_arguments() -> Options:
         dest='expansion_factor_log',
         help='expansion factor',
         nargs='+',
-        default=1,
+        default=0,
         required=False,
         metavar='FACTOR',
         type=int)
