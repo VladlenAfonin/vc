@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import typing
 
 import galois
 
@@ -58,13 +59,7 @@ class Verifier:
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range)
-        logger.debug(f'{query_indices = }')
-
-        extended_indices = [
-                [
-                    i + j*query_indices_range//self._parameters.folding_factor for j in range(self._parameters.folding_factor)
-                ] for i in query_indices
-            ]
+        extended_indices = self._extend_indices(query_indices, self._parameters.folding_factor * query_indices_range)
         logger.debug(f'{extended_indices = }')
 
         evaluation_domain = self._parameters.initial_evaluation_domain
@@ -83,13 +78,17 @@ class Verifier:
             query_indices = list(set(j % query_indices_range for j in query_indices))
             logger.debug(f'{query_indices = }')
             evaluation_domain = domain.fold(evaluation_domain, self._parameters.folding_factor)
-            extended_indices = [
-                [
-                    i + j*query_indices_range//self._parameters.folding_factor for j in range(self._parameters.folding_factor)
-                ] for i in query_indices
-            ]
+            extended_indices = self._extend_indices(query_indices, self._parameters.folding_factor * query_indices_range)
             logger.debug(f'{extended_indices = }')
 
         final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
         logger.debug(f'{final_polynomial_answers = }')
         return True
+
+    def _extend_indices(self, indices: typing.List[int], indices_range) -> typing.List[typing.List[int]]:
+        return [
+                [
+                    i + j*indices_range//self._parameters.folding_factor
+                    for j in range(self._parameters.folding_factor)
+                ] for i in indices
+            ]
