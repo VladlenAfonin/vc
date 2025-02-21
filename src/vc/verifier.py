@@ -114,14 +114,16 @@ class Verifier:
             evaluation_domain_length //= self._parameters.folding_factor
             evaluation_domain = fold_domain(evaluation_domain, self._parameters.folding_factor)
 
-            extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
+            logger.debug(f'{evaluation_domain = }')
 
-            logger.debug(f'=========================================================')
+            extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
 
             # logger.debug(f'{query_indices = }')
             # logger.debug(f'{extended_indices = }')
 
-        final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
+            logger.debug(f'=========================================================')
+
+        final_polynomial_answers = proof.final_polynomial(evaluation_domain[list(query_indices)])
         final_check = all(folded_values == final_polynomial_answers)
 
         logger.debug(f'{final_polynomial_answers = }')
