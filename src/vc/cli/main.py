@@ -111,7 +111,7 @@ def parse_arguments() -> Options:
         dest='security_level_log',
         help='desired security level',
         nargs='+',
-        default=2,
+        default=1,
         required=False,
         metavar='LEVEL',
         type=int)
@@ -146,15 +146,15 @@ def main() -> int:
         initial_coefficients_length_log=options.initial_degree_log,
         field=field)
 
-    logger.info(f'{fri_parameters = }')
+    # logger.info(f'{fri_parameters = }')
 
     prover = Prover(fri_parameters)
     proof = prover.prove(g)
-    logger.info(f'{proof = }')
+    # logger.info(f'{proof = }')
 
     verifier = Verifier(fri_parameters)
     verification_result = verifier.verify(proof)
-    logger.info(f'{verification_result = }')
+    # logger.info(f'{verification_result = }')
 
     return 0
 

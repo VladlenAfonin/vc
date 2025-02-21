@@ -41,6 +41,14 @@ class Verifier:
             initial_evaluation_domain=parameters.initial_evaluation_domain)
 
     def verify(self, proof: Proof) -> bool:
+        """Verify proof.
+
+        :param proof: Proof for some polynomial.
+        :type proof: Proof
+        :return: ``True`` if ``proof`` is valid. ``False`` otherwise.
+        :rtype: bool
+        """
+
         if proof.final_polynomial.degree + 1 > self._parameters.final_coefficients_length:
             logger.error(f'invalid final polynomial degree')
             return False
@@ -55,40 +63,72 @@ class Verifier:
             self._state.sponge.absorb(proof.merkle_roots[i])
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
 
+        evaluation_domain = self._parameters.initial_evaluation_domain
+        evaluation_domain_length = self._parameters.initial_evaluation_domain_length
+
         query_indices_range = self._parameters.initial_evaluation_domain_length // self._parameters.folding_factor
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range)
-        extended_indices = self._extend_indices(query_indices, self._parameters.folding_factor * query_indices_range)
-        logger.debug(f'{extended_indices = }')
+        extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
 
-        evaluation_domain = self._parameters.initial_evaluation_domain
         folded_values = None
+        folded_values_prev = None
         for i in range(self._parameters.number_of_rounds + 1):
-            # TODO: Add intermediate consistency checks.
-
             folded_values = []
             for indices, ys in zip(extended_indices, proof.round_proofs[i].evaluations):
                 xs = evaluation_domain[indices]
                 folded_polynomial = galois.lagrange_poly(xs, ys)
                 folded_values.append(folded_polynomial(folding_randomness_array[i]))
+
+            # begin # TODO: Remove debug information.
+            logger.debug(f'begin round {i = } =======================')
+            logger.debug(f'{evaluation_domain_length = }')
+            logger.debug(f'{evaluation_domain[query_indices] = }')
+            logger.debug(f'{query_indices = }')
+            logger.debug(f'{extended_indices = }')
+            logger.debug(f'{proof.round_proofs[i].evaluations = }')
+            logger.debug(f'{folded_values_prev = }')
             logger.debug(f'{folded_values = }')
+            logger.debug(f'end round {i = } =======================')
+            # end # TODO: Remove debug information.
+
+            folded_values_prev = folded_values
 
             query_indices_range //= self._parameters.folding_factor
             query_indices = list(set(j % query_indices_range for j in query_indices))
-            logger.debug(f'{query_indices = }')
+
             evaluation_domain = domain.fold(evaluation_domain, self._parameters.folding_factor)
-            extended_indices = self._extend_indices(query_indices, self._parameters.folding_factor * query_indices_range)
-            logger.debug(f'{extended_indices = }')
+            evaluation_domain_length //= self._parameters.folding_factor
+
+            extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
 
         final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
         logger.debug(f'{final_polynomial_answers = }')
+
         return True
 
-    def _extend_indices(self, indices: typing.List[int], indices_range) -> typing.List[typing.List[int]]:
+    def _extend_indices(self, indices: typing.List[int], domain_length: int) -> typing.List[typing.List[int]]:
+        """Extend indices to be used for interpolation of stacked evaluations.
+
+        :param indices: Indices corresponding to stacked evaluations rows.
+        :type indices: typing.List[int]
+        :param domain_length: Domain length.
+        :type domain_length: int
+        :return: Extended indices.
+        :rtype: typing.List[typing.List[int]]
+
+        Examples
+        --------
+
+        .. code:: python
+            # Say, folding_factor = 2.
+            assert all([[0, 8], [2, 10]] == self._extend_indices([0, 2], 8))
+        """
+
         return [
-                [
-                    i + j*indices_range//self._parameters.folding_factor
-                    for j in range(self._parameters.folding_factor)
-                ] for i in indices
-            ]
+            [
+                i + j*domain_length//self._parameters.folding_factor
+                for j in range(self._parameters.folding_factor)
+            ] for i in indices
+        ]
