@@ -67,14 +67,16 @@ class Verifier:
         evaluation_domain = self._parameters.initial_evaluation_domain
         evaluation_domain_length = self._parameters.initial_evaluation_domain_length
 
-        query_indices_range = self._parameters.initial_evaluation_domain_length // self._parameters.folding_factor
+        query_indices_range = \
+            self._parameters.initial_evaluation_domain_length // \
+            self._parameters.folding_factor
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range)
         extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
 
-        # logger.debug(f'{query_indices = }')
-        # logger.debug(f'{extended_indices = }')
+        logger.debug(f'{query_indices = }')
+        logger.debug(f'{extended_indices = }')
 
         unordered_folded_values = None
         check_indices = None
@@ -83,9 +85,9 @@ class Verifier:
             if check_indices is not None:
                 assert folded_values is not None
 
-                # logger.debug(f'{folded_values = }')
-                # logger.debug(f'{proof.round_proofs[i].stacked_evaluations = }')
-                # logger.debug(f'{check_indices = }')
+                logger.debug(f'{folded_values = }')
+                logger.debug(f'{proof.round_proofs[i].stacked_evaluations = }')
+                logger.debug(f'{check_indices = }')
 
                 for j, se in enumerate(proof.round_proofs[i].stacked_evaluations):
                     temp_result = folded_values[j] == se[check_indices[j]]
@@ -102,16 +104,8 @@ class Verifier:
                 unordered_folded_values.append(folded_polynomial(folding_randomness_array[i]))
 
             query_indices_range //= self._parameters.folding_factor
-            temp_sorted_array = sorted(
-                # |-Next query index,        |-Check index,              |-Value.
-                # V                          V                           V
-                ((ids % query_indices_range, ids // query_indices_range, ufv)
-                    for ids, ufv in zip(query_indices, unordered_folded_values)),
-                # Sort by new query index.
-                key=lambda x: x[0])
-            # logger.debug(f'{temp_sorted_array = }')
-            query_indices, check_indices, folded_values = zip(*temp_sorted_array)
-            query_indices = numpy.unique_values(query_indices)
+            query_indices, check_indices, folded_values = self._process(
+                query_indices, query_indices_range, unordered_folded_values)
 
             logger.debug(f'{query_indices = }')
             logger.debug(f'{check_indices = }')
@@ -130,10 +124,10 @@ class Verifier:
             # logger.debug(f'{extended_indices = }')
 
         final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
-        final_check = all(unordered_folded_values == final_polynomial_answers)
+        final_check = all(folded_values == final_polynomial_answers)
 
-        # logger.debug(f'{final_polynomial_answers = }')
-        # logger.debug(f'{unordered_folded_values = }')
+        logger.debug(f'{final_polynomial_answers = }')
+        logger.debug(f'{folded_values = }')
 
         # if not final_check:
         #     logger.error(f'final check failed')
@@ -160,9 +154,43 @@ class Verifier:
             assert all([[0, 8], [2, 10]] == self._extend_indices([0, 2], 8))
         """
 
+        assert \
+            domain_length % self._parameters.folding_factor == 0, \
+            'domain length must be divisible by folding factor'
+
         return [
             [
                 i + j*domain_length//self._parameters.folding_factor
                 for j in range(self._parameters.folding_factor)
             ] for i in indices
         ]
+
+    def _dedup(
+            self,
+            array: typing.List[typing.Tuple[int, ...]]
+            ) -> typing.List[typing.Tuple[int, ...]]:
+        seen = []
+        deduped_array = []
+        for element in array:
+            if element[0] in seen:
+                continue
+
+            seen.append(element[0])
+            deduped_array.append(element)
+
+        return deduped_array
+
+    def _process(
+            self,
+            query_indices: numpy.ndarray[int],
+            query_indices_range: int,
+            unordered_folded_values: typing.List[galois.Array]) -> typing.Tuple:
+        temp_sorted_array = sorted(
+            # |-Next query index,        |-Check index,              |-Value.
+            # V                          V                           V
+            ((ids % query_indices_range, ids // query_indices_range, ufv)
+                for ids, ufv in zip(query_indices, unordered_folded_values)),
+            # Sort by next query index.
+            key=lambda x: x[0])
+
+        return zip(*self._dedup(temp_sorted_array))
