@@ -54,11 +54,11 @@ class Verifier:
             return False
 
         for merkle_root, round_proof in zip(proof.merkle_roots, proof.round_proofs):
-            if not MerkleTree.verify_bulk(round_proof.evaluations, merkle_root, round_proof.proofs):
+            if not MerkleTree.verify_bulk(round_proof.stacked_evaluations, merkle_root, round_proof.proofs):
                 logger.error(f'invalid merkle tree proofs')
                 return False
 
-        folding_randomness_array = []
+        folding_randomness_array: typing.List[galois.Array] = []
         for i in range(self._parameters.number_of_rounds + 1):
             self._state.sponge.absorb(proof.merkle_roots[i])
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
@@ -76,24 +76,10 @@ class Verifier:
         folded_values_prev = None
         for i in range(self._parameters.number_of_rounds + 1):
             folded_values = []
-            for indices, ys in zip(extended_indices, proof.round_proofs[i].evaluations):
+            for indices, ys in zip(extended_indices, proof.round_proofs[i].stacked_evaluations):
                 xs = evaluation_domain[indices]
                 folded_polynomial = galois.lagrange_poly(xs, ys)
                 folded_values.append(folded_polynomial(folding_randomness_array[i]))
-
-            # begin # TODO: Remove debug information.
-            logger.debug(f'begin round {i = } =======================')
-            logger.debug(f'{evaluation_domain_length = }')
-            logger.debug(f'{evaluation_domain[query_indices] = }')
-            logger.debug(f'{query_indices = }')
-            logger.debug(f'{extended_indices = }')
-            logger.debug(f'{proof.round_proofs[i].evaluations = }')
-            logger.debug(f'{folded_values_prev = }')
-            logger.debug(f'{folded_values = }')
-            logger.debug(f'end round {i = } =======================')
-            # end # TODO: Remove debug information.
-
-            folded_values_prev = folded_values
 
             query_indices_range //= self._parameters.folding_factor
             query_indices = list(set(j % query_indices_range for j in query_indices))
@@ -104,9 +90,15 @@ class Verifier:
             extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
 
         final_polynomial_answers = proof.final_polynomial(evaluation_domain[query_indices])
-        logger.debug(f'{final_polynomial_answers = }')
+        final_check = all(folded_values == final_polynomial_answers)
 
-        return True
+        logger.debug(f'{final_polynomial_answers = }')
+        logger.debug(f'{folded_values = }')
+
+        if not final_check:
+            logger.error(f'final check failed')
+
+        return final_check
 
     def _extend_indices(self, indices: typing.List[int], domain_length: int) -> typing.List[typing.List[int]]:
         """Extend indices to be used for interpolation of stacked evaluations.
@@ -132,3 +124,6 @@ class Verifier:
                 for j in range(self._parameters.folding_factor)
             ] for i in indices
         ]
+
+    def _fold_indices(self, indices: typing.List[int], indices_range: int) -> typing.List[int]:
+        return list(set(i % indices_range for i in indices))

@@ -154,7 +154,7 @@ def main() -> int:
 
     verifier = Verifier(fri_parameters)
     verification_result = verifier.verify(proof)
-    # logger.info(f'{verification_result = }')
+    logger.info(f'{verification_result = }')
 
     return 0
 

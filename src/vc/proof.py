@@ -15,7 +15,7 @@ logger = logging.getLogger(LOGGER_FRI)
 
 @dataclasses.dataclass(slots=True)
 class RoundProof:
-    evaluations: galois.Array
+    stacked_evaluations: galois.Array
     proofs: typing.List[pymerkle.MerkleProof]
 
     def check(self) -> bool:
