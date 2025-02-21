@@ -6,9 +6,10 @@ import typing
 
 import galois
 
-from vc import polynomial, domain
+from vc import polynomial
 from vc.base import is_pow2
 from vc.constants import MEKRLE_HASH_ALGORITHM, LOGGER_FRI
+from vc.fold import fold_domain, fold_indices, fold_polynomial
 from vc.proof import Proof, RoundProof
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
@@ -82,7 +83,9 @@ class Prover:
         self._state = Prover.State(f, self._parameters)
 
         initial_round_evaluations = self._state.polynomial(self._state.evaluation_domain)
-        stacked_evaluations = polynomial.stack(initial_round_evaluations, self._parameters.folding_factor)
+        stacked_evaluations = polynomial.stack(
+            initial_round_evaluations,
+            self._parameters.folding_factor)
         self._state.evaluations.append(stacked_evaluations)
 
         merkle_tree = MerkleTree()
@@ -98,26 +101,39 @@ class Prover:
 
         round_proofs: typing.List[RoundProof] = []
 
-        query_indices_range = self._parameters.initial_evaluation_domain_length // self._parameters.folding_factor
+        query_indices_range = \
+            self._parameters.initial_evaluation_domain_length // \
+            self._parameters.folding_factor
+
+        # debug_domain = self._parameters.initial_evaluation_domain
+
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range)
         query_evaluations = self._state.evaluations[0][query_indices]
+        # logger.debug(f'{query_indices = }')
+        # logger.debug(f'{debug_domain[query_indices] = }')
+        # logger.debug(f'{}')
 
         merkle_proofs = self._state.merkle_trees[0].prove_bulk(query_indices)
         round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
+        # logger.debug(f'{query_evaluations = }')
 
         for i in range(self._parameters.number_of_rounds):
             query_indices_range //= self._parameters.folding_factor
-            query_indices = list(set(j % query_indices_range for j in query_indices))
+            query_indices = fold_indices(query_indices, query_indices_range)
             query_evaluations = self._state.evaluations[i + 1][query_indices]
+            # logger.debug(f'{query_evaluations = }')
+            # debug_domain = fold_domain(debug_domain, self._parameters.folding_factor)
+            # logger.debug(f'{debug_domain[query_indices] = }')
 
             merkle_proofs = self._state.merkle_trees[i + 1].prove_bulk(query_indices)
             round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
 
         # As far as I understand, the final polynomial does not need any proofs.
         final_randomness = self._state.sponge.squeeze_field_element()
-        final_polynomial = polynomial.fold(
+        # logger.debug(f'{final_randomness = }')
+        final_polynomial = fold_polynomial(
             self._state.polynomial,
             final_randomness,
             self._parameters.folding_factor)
@@ -128,16 +144,19 @@ class Prover:
 
     def _round(self) -> None:
         verifier_randomness = self._state.sponge.squeeze_field_element()
-        new_polynomial = polynomial.fold(
+        # logger.debug(f'{verifier_randomness = }')
+        new_polynomial = fold_polynomial(
             self._state.polynomial,
             verifier_randomness,
             self._parameters.folding_factor)
-        new_evaluation_domain = domain.fold(
+        new_evaluation_domain = fold_domain(
             self._state.evaluation_domain,
             self._parameters.folding_factor)
 
         new_round_evaluations = new_polynomial(new_evaluation_domain)
-        stacked_evaluations = polynomial.stack(new_round_evaluations, self._parameters.folding_factor)
+        stacked_evaluations = polynomial.stack(
+            new_round_evaluations,
+            self._parameters.folding_factor)
         self._state.evaluations.append(stacked_evaluations)
 
         merkle_tree = MerkleTree()

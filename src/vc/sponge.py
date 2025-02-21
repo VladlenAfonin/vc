@@ -7,6 +7,7 @@ import pickle
 import typing
 
 import galois
+import numpy
 
 from vc.constants import LOGGER_MATH
 
@@ -78,7 +79,7 @@ class Sponge:
 
         return self._squeeze_number(upper_bound, n)
 
-    def squeeze_indices(self, amount: int, upper_bound: int, n: int = 32) -> typing.List[int]:
+    def squeeze_indices(self, amount: int, upper_bound: int, n: int = 32) -> numpy.ndarray[int]:
         """Sample an array of distinct random numbers up to upper bound.
 
         :param amount: Number of indices to squeeze.
@@ -107,7 +108,7 @@ class Sponge:
 
             i += 1
 
-        return result
+        return numpy.sort(numpy.array(result))
 
     def _squeeze_field_element(self, n: int) -> galois.Array:
         """Squeeze a field element.

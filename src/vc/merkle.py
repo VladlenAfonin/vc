@@ -1,9 +1,13 @@
+"""Merkle tree implementation."""
+
+
 import dataclasses
 import logging
 import pickle
 import typing
 
 import galois
+import numpy
 import pymerkle
 
 from vc.constants import LOGGER_MATH, MEKRLE_HASH_ALGORITHM
@@ -15,6 +19,8 @@ hash_buff = pymerkle.InmemoryTree(MEKRLE_HASH_ALGORITHM).hash_buff
 
 @dataclasses.dataclass(init=False, slots=True)
 class MerkleTree:
+    """Merkle tree."""
+
     _tree: pymerkle.BaseMerkleTree
 
     def __init__(self, algorithm=MEKRLE_HASH_ALGORITHM):
@@ -57,7 +63,7 @@ class MerkleTree:
 
         return proof
 
-    def prove_bulk(self, indices: typing.List[int]) -> typing.List[pymerkle.MerkleProof]:
+    def prove_bulk(self, indices: numpy.ndarray[int]) -> typing.List[pymerkle.MerkleProof]:
         proofs = []
         for index in indices:
             proof = self.prove(index)
