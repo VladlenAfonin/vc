@@ -111,8 +111,6 @@ class Verifier:
             logger.debug(f'{check_indices = }')
             logger.debug(f'{folded_values = }')
 
-            # query_indices = fold_indices(query_indices, query_indices_range)
-
             evaluation_domain_length //= self._parameters.folding_factor
             evaluation_domain = fold_domain(evaluation_domain, self._parameters.folding_factor)
 
@@ -129,12 +127,10 @@ class Verifier:
         logger.debug(f'{final_polynomial_answers = }')
         logger.debug(f'{folded_values = }')
 
-        # if not final_check:
-        #     logger.error(f'final check failed')
+        if not final_check:
+            logger.error(f'final check failed')
 
-        # return final_check
-
-        return True
+        return final_check
 
     def _extend_indices(self, indices: typing.List[int], domain_length: int) -> typing.List[typing.List[int]]:
         """Extend indices to be used for interpolation of stacked evaluations.
