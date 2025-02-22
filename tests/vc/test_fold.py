@@ -30,22 +30,42 @@ def test_fold(
 
 
 def test_consistency_check():
-    seed = 2
+    seed = 0
     field = TEST_FIELD
     coefficients_length_log = 4
-    folding_factor = 4
-    expansion_factor = 2
-    query_indices = [0, 1, 2, 3]
+    folding_factor = 2
+    expansion_factor = 4
+    query_indices = [8, 25]
 
-    folding_randomness = field.Random(seed=seed)
+    folding_randomness = 14
     coefficients_length = 1 << coefficients_length_log
     degree = coefficients_length - 1
-    initial_polynomial = galois.Poly.Random(degree, field=field, seed=seed)
+
+    # 62 + 
+    # 107 * x^2 + 
+    # 46 * x^3 + 
+    # 171 * x^4 + 
+    # 87 * x^5 + 
+    # 127 * x^6 + 
+    # 10 * x^7 + 
+    # 86 * x^8 + 
+    # 100 * x^9 + 
+    # 8 * x^10 + 
+    # 119 * x^11 + 
+    # 31 * x^12 + 
+    # 37 * x^13 + 
+    # 22 * x^14 + 
+    # 52 * x^15
+
+    initial_polynomial = galois.Poly(
+        [62, 0, 107, 46, 171, 87, 127, 10, 86, 100, 8, 119, 31, 37, 22, 52],
+        order='asc',
+        field=field)
     initial_evaluation_domain_length = coefficients_length * expansion_factor
     offset = field.primitive_element
     omega = field.primitive_root_of_unity(initial_evaluation_domain_length)
     initial_evaluation_domain = field(
-        [offset * (omega ** i) for i in range(initial_evaluation_domain_length)])
+        [(omega ** i) for i in range(initial_evaluation_domain_length)])
     query_indices_range = initial_evaluation_domain_length // folding_factor
 
     initial_evaluations = initial_polynomial(initial_evaluation_domain)
@@ -55,11 +75,11 @@ def test_consistency_check():
         initial_polynomial,
         folding_randomness,
         folding_factor)
-    # folded_evaluations = folded_polynomial(initial_evaluation_domain)
-    # folded_stacked_evaluations = stack(folded_evaluations, folding_factor)
     folded_domain_length = initial_evaluation_domain_length // folding_factor
     folded_domain = fold_domain(initial_evaluation_domain, folding_factor)
     folded_evaluations = folded_polynomial(folded_domain)
+
+    # This line yields wrong result.
     folded_stacked_evaluations = stack(folded_evaluations, folding_factor)
 
     query_xs = initial_evaluation_domain[query_indices]

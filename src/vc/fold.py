@@ -129,7 +129,7 @@ def fold_domain(domain: galois.Array, folding_factor: int) -> galois.Array:
     assert is_pow2(domain.size), 'domain size must be a power of two'
     assert is_pow2(folding_factor), 'folding factor must be a power of two'
 
-    new_domain = numpy.unique_values(domain ** folding_factor)
+    new_domain = domain[:domain.size // folding_factor] ** folding_factor
     assert (domain.size // new_domain.size) == folding_factor
 
     return new_domain
