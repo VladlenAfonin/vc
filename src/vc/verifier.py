@@ -8,7 +8,7 @@ import galois
 import numpy
 
 from vc.constants import LOGGER_FRI, MEKRLE_HASH_ALGORITHM
-from vc.fold import fold_domain, fold_indices
+from vc.fold import extend_indices, fold_domain, fold_indices
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
 from vc.proof import Proof
@@ -116,7 +116,10 @@ class Verifier:
 
             logger.debug(f'{evaluation_domain = }')
 
-            extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
+            extended_indices = extend_indices(
+                query_indices,
+                evaluation_domain_length,
+                self._parameters.folding_factor)
 
             # logger.debug(f'{query_indices = }')
             # logger.debug(f'{extended_indices = }')
@@ -133,35 +136,6 @@ class Verifier:
             logger.error(f'final check failed')
 
         return final_check
-
-    def _extend_indices(self, indices: typing.List[int], domain_length: int) -> typing.List[typing.List[int]]:
-        """Extend indices to be used for interpolation of stacked evaluations.
-
-        :param indices: Indices corresponding to stacked evaluations rows.
-        :type indices: typing.List[int]
-        :param domain_length: Domain length.
-        :type domain_length: int
-        :return: Extended indices.
-        :rtype: typing.List[typing.List[int]]
-
-        Examples
-        --------
-
-        .. code:: python
-            # Say, folding_factor = 2.
-            assert all([[0, 8], [2, 10]] == self._extend_indices([0, 2], 8))
-        """
-
-        assert \
-            domain_length % self._parameters.folding_factor == 0, \
-            'domain length must be divisible by folding factor'
-
-        return [
-            [
-                i + j*domain_length//self._parameters.folding_factor
-                for j in range(self._parameters.folding_factor)
-            ] for i in indices
-        ]
 
     def _dedup(
             self,

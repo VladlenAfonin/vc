@@ -1,13 +1,42 @@
 """Folding related functions."""
 
 
+import typing
 import galois
 import numpy
 
 from vc.base import is_pow2
 
 
-def fold_indices(indices: numpy.ndarray[int], indices_range: int) -> numpy.ndarray[int]:
+# TODO: Rename.
+def fold_sort_generate(
+        query_indices: typing.List[int],
+        query_indices_range: int,
+        unordered_folded_values: galois.Array
+        ) -> typing.Tuple:
+    temp_sorted_array = sorted(
+        # |-Next query index,        |-Check index,              |-Value.
+        # V                          V                           V
+        ((ids % query_indices_range, ids // query_indices_range, ufv)
+            for ids, ufv in zip(query_indices, unordered_folded_values)),
+        # Sort by next query index.
+        key=lambda x: x[0])
+
+    seen = []
+    deduped_array = []
+    for element in temp_sorted_array:
+        if element[0] in seen:
+            continue
+
+        seen.append(element[0])
+        deduped_array.append(element)
+
+    return zip(*deduped_array)
+
+def fold_indices(
+        indices: numpy.ndarray[int],
+        indices_range: int
+        ) -> numpy.ndarray[int]:
     """Fold indices preserving sorted state.
 
     :param indices: Indices to fold.
@@ -22,7 +51,42 @@ def fold_indices(indices: numpy.ndarray[int], indices_range: int) -> numpy.ndarr
     return numpy.sort(numpy.unique_values(indices % indices_range))
 
 
-def fold_polynomial(g: galois.Poly, randomness: int, folding_factor: int) -> galois.Poly:
+def extend_indices(
+        indices: typing.Iterable[int],
+        domain_length: int,
+        folding_factor: int
+        ) -> typing.List[typing.List[int]]:
+    """Extend indices to be used for interpolation of stacked evaluations.
+
+    :param indices: Indices corresponding to stacked evaluations rows.
+    :type indices: typing.List[int]
+    :param domain_length: Domain length.
+    :type domain_length: int
+    :param folding_factor: Folding factor.
+    :type folding_factor: int
+    :return: Extended indices.
+    :rtype: typing.List[typing.List[int]]
+
+    Examples
+    --------
+
+    .. code:: python
+        assert all([[0, 8], [2, 10]] == extend_indices([0, 2], 8, 2))
+    """
+
+    return [
+        [
+            i + j*domain_length//folding_factor
+            for j in range(folding_factor)
+        ] for i in indices
+    ]
+
+
+def fold_polynomial(
+        g: galois.Poly,
+        randomness: int,
+        folding_factor: int
+        ) -> galois.Poly:
     """Fold polynomial.
 
     :param g: Polynomial to fold.
