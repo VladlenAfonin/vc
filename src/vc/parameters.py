@@ -11,7 +11,7 @@ from vc.constants import LOGGER_FRI
 logger = logging.getLogger(LOGGER_FRI)
 
 
-@dataclasses.dataclass(init=False, slots=True)
+@dataclasses.dataclass(init=False, slots=True, repr=False)
 class FriParameters:
     """Prover options."""
     folding_factor: int
@@ -44,6 +44,19 @@ class FriParameters:
     """Root of unity for initial domain generation."""
     offset: galois.Array
     """Multiplicative group generator."""
+
+    def __repr__(self) -> str:
+        return f"""
+    expansion_factor = {self.expansion_factor}
+    folding_factor = {self.folding_factor}
+    initial_coefficients_length = {self.initial_coefficients_length}
+    final_coefficients_length = {self.final_coefficients_length}
+    initial_evaluation_domain_length = {self.initial_evaluation_domain_length}
+
+    security_level = {self.security_level}
+    number_of_rounds = {self.number_of_rounds}
+    number_of_repetitions = {self.number_of_repetitions}
+        """
 
     def __init__(
             self,

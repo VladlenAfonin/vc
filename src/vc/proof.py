@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import pickle
 import typing
 
 import galois
@@ -18,13 +19,18 @@ class RoundProof:
     stacked_evaluations: galois.Array
     proofs: typing.List[pymerkle.MerkleProof]
 
-    def check(self) -> bool:
-        # TODO: Implement.
-        raise NotImplementedError()
-
 
 @dataclasses.dataclass(slots=True)
 class Proof:
     round_proofs: typing.List[RoundProof]
     merkle_roots: typing.List[bytes]
     final_polynomial: galois.Poly
+
+    def serialize(self) -> bytes:
+        return pickle.dumps(self)
+
+    def __repr__(self) -> str:
+        return f"""
+    final polynomial: {self.final_polynomial}
+    proof size: {len(self.serialize()) // 1024} KB
+"""

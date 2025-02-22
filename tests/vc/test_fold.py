@@ -103,5 +103,3 @@ def test_consistency_check():
     for check_index, computed_answer, ys in zip(
             check_indices, folded_answers, folded_stacked_evaluations[list(query_indices)]):
         assert computed_answer == ys[check_index]
-
-    pass

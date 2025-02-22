@@ -78,8 +78,8 @@ class Verifier:
             evaluation_domain_length,
             self._parameters.folding_factor)
 
-        logger.debug(f'{query_indices = }')
-        logger.debug(f'{extended_indices = }')
+        # logger.debug(f'{query_indices = }')
+        # logger.debug(f'{extended_indices = }')
 
         unordered_folded_values = None
         check_indices = None
@@ -88,13 +88,15 @@ class Verifier:
             if check_indices is not None:
                 assert folded_values is not None
 
-                logger.debug(f'{folded_values = }')
-                logger.debug(f'{proof.round_proofs[i].stacked_evaluations = }')
-                logger.debug(f'{check_indices = }')
+                # logger.debug(f'{folded_values = }')
+                # logger.debug(f'{proof.round_proofs[i].stacked_evaluations = }')
+                # logger.debug(f'{check_indices = }')
 
                 for j, se in enumerate(proof.round_proofs[i].stacked_evaluations):
                     temp_result = folded_values[j] == se[check_indices[j]]
-                    logger.debug(f'{temp_result = }')
+                    if not temp_result:
+                        logger.error(f'consistency check failed')
+                        return False
 
             unordered_folded_values = []
             for indices, ys in zip(extended_indices, proof.round_proofs[i].stacked_evaluations):
@@ -110,14 +112,14 @@ class Verifier:
             query_indices, check_indices, folded_values = fold_sort_generate(
                 query_indices, query_indices_range, unordered_folded_values)
 
-            logger.debug(f'{query_indices = }')
-            logger.debug(f'{check_indices = }')
-            logger.debug(f'{folded_values = }')
+            # logger.debug(f'{query_indices = }')
+            # logger.debug(f'{check_indices = }')
+            # logger.debug(f'{folded_values = }')
 
             evaluation_domain_length //= self._parameters.folding_factor
             evaluation_domain = fold_domain(evaluation_domain, self._parameters.folding_factor)
 
-            logger.debug(f'{evaluation_domain = }')
+            # logger.debug(f'{evaluation_domain = }')
 
             extended_indices = extend_indices(
                 query_indices,
@@ -127,13 +129,24 @@ class Verifier:
             # logger.debug(f'{query_indices = }')
             # logger.debug(f'{extended_indices = }')
 
-            logger.debug(f'=========================================================')
+            # logger.debug(f'=========================================================')
 
-        final_polynomial_answers = proof.final_polynomial(evaluation_domain[list(query_indices)])
+        query_indices = numpy.array(query_indices)
+        check_indices = numpy.array(check_indices)
+
+        # logger.debug(f'{query_indices = }')
+        # logger.debug(f'{check_indices = }')
+        # logger.debug(f'{query_indices + query_indices_range * check_indices = }')
+        # logger.debug(f'{folded_values = }')
+        # logger.debug(f'{evaluation_domain = }')
+        # logger.debug(f'{proof.final_polynomial(evaluation_domain) = }')
+
+        final_polynomial_answers = proof.final_polynomial(
+            evaluation_domain[list(query_indices + query_indices_range * check_indices)])
         final_check = all(folded_values == final_polynomial_answers)
 
-        logger.debug(f'{final_polynomial_answers = }')
-        logger.debug(f'{folded_values = }')
+        # logger.debug(f'{final_polynomial_answers = }')
+        # logger.debug(f'{folded_values = }')
 
         if not final_check:
             logger.error(f'final check failed')

@@ -71,7 +71,7 @@ def parse_arguments() -> Options:
         dest='expansion_factor_log',
         help='expansion factor',
         nargs='+',
-        default=1,
+        default=2,
         required=False,
         metavar='FACTOR',
         type=int)
@@ -81,7 +81,7 @@ def parse_arguments() -> Options:
         dest='field',
         help='prime field size',
         nargs='+',
-        default=193,
+        default=18446744069414584321,
         required=False,
         metavar='MODULUS',
         type=int)
@@ -91,7 +91,7 @@ def parse_arguments() -> Options:
         dest='final_degree_log',
         help='number of coefficients when to stop the protocol',
         nargs='+',
-        default=0,
+        default=1,
         required=False,
         metavar='N',
         type=int)
@@ -101,7 +101,7 @@ def parse_arguments() -> Options:
         dest='initial_degree_log',
         help='initial number of coefficients',
         nargs='+',
-        default=3,
+        default=4,
         required=False,
         metavar='N',
         type=int)
@@ -111,7 +111,7 @@ def parse_arguments() -> Options:
         dest='security_level_log',
         help='desired security level',
         nargs='+',
-        default=1,
+        default=3,
         required=False,
         metavar='LEVEL',
         type=int)
@@ -146,11 +146,11 @@ def main() -> int:
         initial_coefficients_length_log=options.initial_degree_log,
         field=field)
 
-    # logger.info(f'{fri_parameters = }')
+    logger.info(f'{fri_parameters = }')
 
     prover = Prover(fri_parameters)
     proof = prover.prove(g)
-    # logger.info(f'{proof = }')
+    logger.info(f'{proof = }')
 
     verifier = Verifier(fri_parameters)
     verification_result = verifier.verify(proof)
