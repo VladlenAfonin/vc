@@ -32,10 +32,10 @@ def test_fold(
 def test_consistency_check():
     seed = 2
     field = TEST_FIELD
-    coefficients_length_log = 3
-    folding_factor = 2
+    coefficients_length_log = 4
+    folding_factor = 4
     expansion_factor = 2
-    query_indices = [1]
+    query_indices = [0, 1, 2, 3]
 
     folding_randomness = field.Random(seed=seed)
     coefficients_length = 1 << coefficients_length_log
@@ -82,6 +82,6 @@ def test_consistency_check():
 
     for check_index, computed_answer, ys in zip(
             check_indices, folded_answers, folded_stacked_evaluations[list(query_indices)]):
-        result = computed_answer == ys[check_index]
+        assert computed_answer == ys[check_index]
 
     pass

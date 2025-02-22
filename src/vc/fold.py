@@ -14,13 +14,15 @@ def fold_sort_generate(
         query_indices_range: int,
         unordered_folded_values: galois.Array
         ) -> typing.Tuple:
-    temp_sorted_array = sorted(
-        # |-Next query index,        |-Check index,              |-Value.
-        # V                          V                           V
-        ((ids % query_indices_range, ids // query_indices_range, ufv)
-            for ids, ufv in zip(query_indices, unordered_folded_values)),
-        # Sort by next query index.
-        key=lambda x: x[0])
+    # Get array of tuples [(new_query_index, check_index, folded_value)]
+    temp_collected_array = list(
+    #    |-Next query index,        |-Check index,              |-Value.
+    #    V                          V                           V
+        (ids % query_indices_range, ids // query_indices_range, ufv)
+        for ids, ufv in zip(query_indices, unordered_folded_values))
+
+    # Sort array of tuples by new query index.
+    temp_sorted_array = sorted(temp_collected_array, key=lambda x: x[0])
 
     seen = []
     deduped_array = []

@@ -8,7 +8,7 @@ import galois
 import numpy
 
 from vc.constants import LOGGER_FRI, MEKRLE_HASH_ALGORITHM
-from vc.fold import extend_indices, fold_domain, fold_indices
+from vc.fold import extend_indices, fold_domain, fold_indices, fold_sort_generate
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
 from vc.proof import Proof
@@ -73,7 +73,10 @@ class Verifier:
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range)
-        extended_indices = self._extend_indices(query_indices, evaluation_domain_length)
+        extended_indices = extend_indices(
+            query_indices,
+            evaluation_domain_length,
+            self._parameters.folding_factor)
 
         logger.debug(f'{query_indices = }')
         logger.debug(f'{extended_indices = }')
@@ -104,7 +107,7 @@ class Verifier:
                 unordered_folded_values.append(folded_polynomial(folding_randomness_array[i]))
 
             query_indices_range //= self._parameters.folding_factor
-            query_indices, check_indices, folded_values = self._process(
+            query_indices, check_indices, folded_values = fold_sort_generate(
                 query_indices, query_indices_range, unordered_folded_values)
 
             logger.debug(f'{query_indices = }')
@@ -136,33 +139,3 @@ class Verifier:
             logger.error(f'final check failed')
 
         return final_check
-
-    def _dedup(
-            self,
-            array: typing.List[typing.Tuple[int, ...]]
-            ) -> typing.List[typing.Tuple[int, ...]]:
-        seen = []
-        deduped_array = []
-        for element in array:
-            if element[0] in seen:
-                continue
-
-            seen.append(element[0])
-            deduped_array.append(element)
-
-        return deduped_array
-
-    def _process(
-            self,
-            query_indices: numpy.ndarray[int],
-            query_indices_range: int,
-            unordered_folded_values: typing.List[galois.Array]) -> typing.Tuple:
-        temp_sorted_array = sorted(
-            # |-Next query index,        |-Check index,              |-Value.
-            # V                          V                           V
-            ((ids % query_indices_range, ids // query_indices_range, ufv)
-                for ids, ufv in zip(query_indices, unordered_folded_values)),
-            # Sort by next query index.
-            key=lambda x: x[0])
-
-        return zip(*self._dedup(temp_sorted_array))
