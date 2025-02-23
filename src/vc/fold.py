@@ -133,7 +133,10 @@ def fold_polynomial(
     return galois.Poly(folded_coefficients, order='asc', field=g.field)
 
 
-def fold_domain(domain: galois.Array, folding_factor: int) -> galois.Array:
+def fold_domain(
+        domain: galois.Array,
+        folding_factor: int
+        ) -> galois.Array:
     """Fold domain.
 
     :param domain: Evaluation domain to fold.
