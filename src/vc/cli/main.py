@@ -7,7 +7,7 @@ import time
 
 import galois
 
-from vc.constants import LOGGER_FRI
+from vc.constants import FIELD_GOLDILOCKS, LOGGER_FRI
 from vc.prover import Prover
 from vc.parameters import FriParameters
 from vc.verifier import Verifier
@@ -57,62 +57,74 @@ def parse_arguments() -> Options:
         prog='vc',
         description='FRI polynomial commitment scheme experimentation program')
 
-    parser.add_argument('--folding-factor-log',
+    parser.add_argument(
+        '--ff',
+        '--folding-factor-log',
         action='store',
         dest='folding_factor_log',
-        help='folding factor',
-        nargs='?',
-        default=3,
+        help='folding factor. default: 3',
+        nargs=1,
+        default=[3],
         required=False,
         metavar='FACTOR',
         type=int)
 
-    parser.add_argument('--expansion-factor-log',
+    parser.add_argument(
+        '--ef',
+        '--expansion-factor-log',
         action='store',
         dest='expansion_factor_log',
-        help='expansion factor',
-        nargs='?',
-        default=3,
+        help='expansion factor. default: 3',
+        nargs=1,
+        default=[3],
         required=False,
         metavar='FACTOR',
         type=int)
 
-    parser.add_argument('--field',
+    parser.add_argument(
+        '-f',
+        '--field',
         action='store',
         dest='field',
-        help='prime field size',
-        nargs='?',
-        default=18446744069414584321,
+        help='prime field size. default: 18446744069414584321 (goldilocks field)',
+        nargs=1,
+        default=[18446744069414584321],
         required=False,
         metavar='MODULUS',
         type=int)
 
-    parser.add_argument('--final-degree-log',
+    parser.add_argument(
+        '--fd',
+        '--final-degree-log',
         action='store',
         dest='final_degree_log',
-        help='number of coefficients when to stop the protocol',
-        nargs='?',
-        default=2,
+        help='number of coefficients when to stop the protocol. default: 2',
+        nargs=1,
+        default=[2],
         required=False,
         metavar='N',
         type=int)
 
-    parser.add_argument('--initial-degree-log',
+    parser.add_argument(
+        '--id',
+        '--initial-degree-log',
         action='store',
         dest='initial_degree_log',
-        help='initial number of coefficients',
-        nargs='?',
-        default=10,
+        help='initial number of coefficients. default: 10',
+        nargs=1,
+        default=[10],
         required=False,
         metavar='N',
         type=int)
 
-    parser.add_argument('--security-level-log',
+    parser.add_argument(
+        '--sl',
+        '--security-level-log',
         action='store',
         dest='security_level_log',
-        help='desired security level',
-        nargs='?',
-        default=5,
+        help='desired security level. default: 5 bits',
+        nargs=1,
+        default=[5],
         required=False,
         metavar='LEVEL',
         type=int)
@@ -122,12 +134,12 @@ def parse_arguments() -> Options:
     # TODO: Add argument verification.
 
     return Options(
-        folding_factor_log=namespace.folding_factor_log,
-        field=namespace.field,
-        final_degree_log=namespace.final_degree_log,
-        initial_degree_log=namespace.initial_degree_log,
-        security_level_log=namespace.security_level_log,
-        expansion_factor_log=namespace.expansion_factor_log)
+        folding_factor_log=namespace.folding_factor_log[0],
+        field=namespace.field[0],
+        final_degree_log=namespace.final_degree_log[0],
+        initial_degree_log=namespace.initial_degree_log[0],
+        security_level_log=namespace.security_level_log[0],
+        expansion_factor_log=namespace.expansion_factor_log[0])
 
 
 def main() -> int:
@@ -149,19 +161,24 @@ def main() -> int:
 
     logger.info(f'fri parameters:{fri_parameters}')
 
-    begin = time.time()
-    prover = Prover(fri_parameters)
-    proof = prover.prove(g)
-    end = time.time()
-    logger.info(f'prover time: {end - begin:.2f} s')
-    logger.info(f'proof:{proof}')
+    try:
+        begin = time.time()
+        prover = Prover(fri_parameters)
+        proof = prover.prove(g)
+        end = time.time()
+        logger.info(f'prover time: {end - begin:.2f} s')
+        logger.info(f'proof:{proof}')
 
-    begin = time.time()
-    verifier = Verifier(fri_parameters)
-    verification_result = verifier.verify(proof)
-    end = time.time()
-    logger.info(f'verifier time: {(end - begin) * 1000:.0f} ms')
-    logger.info(f'verification result: {verification_result}')
+        begin = time.time()
+        verifier = Verifier(fri_parameters)
+        verification_result = verifier.verify(proof)
+        end = time.time()
+        logger.info(f'verifier time: {(end - begin) * 1000:.0f} ms')
+        logger.info(f'verification result: {verification_result}')
+    except Exception as exception:
+        logger.error(f'coefficients of the polynomial which caused an error (in ascending order): {g.coefficients(order='asc')}')
+        logger.error(f'{exception}')
+        raise
 
     return 0
 

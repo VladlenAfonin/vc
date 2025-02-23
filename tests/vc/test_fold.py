@@ -2,7 +2,7 @@ import galois
 import numpy
 import pytest
 
-from vc.constants import TEST_FIELD
+from vc.constants import FIELD_193
 from vc.fold import extend_indices, fold_domain, fold_polynomial, fold_sort_generate, stack
 
 
@@ -23,7 +23,7 @@ def test_fold(
         randomness: int,
         folding_factor: int
         ) -> None:
-    g = galois.Poly(polynomial_coefficients, field=TEST_FIELD, order='asc')
+    g = galois.Poly(polynomial_coefficients, field=FIELD_193, order='asc')
     g_folded = fold_polynomial(g, randomness, folding_factor)
 
     assert g_folded == galois.Poly(expected, field=g.field, order='asc')
@@ -35,7 +35,7 @@ def test_fold(
         #                       [[1, 4],
         # [1, 2, 3, 4, 5, 6] ->  [2, 5],
         #                        [3, 6]]
-        (TEST_FIELD([[1, 4], [2, 5], [3, 6]]), TEST_FIELD([1, 2, 3, 4, 5, 6]), 2)
+        (FIELD_193([[1, 4], [2, 5], [3, 6]]), FIELD_193([1, 2, 3, 4, 5, 6]), 2)
     ])
 def test_stack(expected, evaluations, folding_factor):
     result = stack(evaluations, folding_factor)
@@ -44,7 +44,7 @@ def test_stack(expected, evaluations, folding_factor):
 
 def test_consistency_check():
     seed = 0
-    field = TEST_FIELD
+    field = FIELD_193
     coefficients_length_log = 4
     folding_factor = 2
     expansion_factor = 4

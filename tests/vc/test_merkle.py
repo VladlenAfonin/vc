@@ -2,15 +2,16 @@ import typing
 
 import pytest
 
-from vc.constants import TEST_FIELD
+from vc.constants import FIELD_193
 from vc.merkle import MerkleTree
 from vc.fold import stack
 
 
 def test_append_single():
+    field = FIELD_193
     merkle_tree = MerkleTree()
     folding_factor = 2
-    field_elements = TEST_FIELD.Random(folding_factor)
+    field_elements = field.Random(folding_factor)
     stacked_evaluations = stack(field_elements, folding_factor)
     merkle_tree.append(stacked_evaluations[0])
     root = merkle_tree.get_root()
@@ -32,9 +33,10 @@ def test_append_single():
         ([1, 0])
     ])
 def test_append_bulk(indices: typing.List[int]):
+    field = FIELD_193
     merkle_tree = MerkleTree()
     folding_factor = 2
-    field_elements = TEST_FIELD.Random(8)
+    field_elements = field.Random(8)
     stacked_evaluations = stack(field_elements, folding_factor)
     merkle_tree.append_bulk(stacked_evaluations)
     root = merkle_tree.get_root()

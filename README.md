@@ -49,52 +49,49 @@ It is assumed below that you have installed python from the [official website](h
 ```
 $ vc --help
 ```
-
 ```
-usage: vc [-h] [--folding-factor-log [FACTOR]] [--expansion-factor-log [FACTOR]]
-          [--field [MODULUS]] [--final-degree-log [N]] [--initial-degree-log [N]]
-          [--security-level-log [LEVEL]]
+usage: vc [-h] [--ff FACTOR] [--ef FACTOR] [-f MODULUS] [--fd N] [--id N] [--sl LEVEL]
 
 FRI polynomial commitment scheme experimentation program
 
 options:
   -h, --help            show this help message and exit
-  --folding-factor-log [FACTOR]
-                        folding factor
-  --expansion-factor-log [FACTOR]
-                        expansion factor
-  --field [MODULUS]     prime field size
-  --final-degree-log [N]
-                        number of coefficients when to stop the protocol
-  --initial-degree-log [N]
-                        initial number of coefficients
-  --security-level-log [LEVEL]
-                        desired security level
+  --ff, --folding-factor-log FACTOR
+                        folding factor. default: 3
+  --ef, --expansion-factor-log FACTOR
+                        expansion factor. default: 3
+  -f, --field MODULUS   prime field size. default: 18446744069414584321 (goldilocks
+                        field)
+  --fd, --final-degree-log N
+                        number of coefficients when to stop the protocol. default: 2
+  --id, --initial-degree-log N
+                        initial number of coefficients. default: 10
+  --sl, --security-level-log LEVEL
+                        desired security level. default: 5 bits
 ```
 
 ## Example
 
 ```
-$ vc
+$ vc --ff 4 --id 11 --fd 3 --sl 10 --ef 4
 ```
-
 ```
 INFO:vc.fri:main():fri parameters:
-    expansion factor = 8
-    folding factor = 8
-    initial coefficients length = 1024
-    final coefficients length = 4
-    initial evaluation domain length = 8192
+    expansion factor = 16 (2^4)
+    folding factor = 16 (2^4)
+    initial coefficients length = 2048 (2^3)
+    final coefficients length = 8 (2^3)
+    initial evaluation domain length = 32768 (2^15)
 
-    security level = 32
-    number of rounds = 2
-    number of repetitions = 11
+    security level = 10 bits
+    number of rounds = 1
+    number of query indices = 256
         
-INFO:vc.fri:main():prover time: 17.97 s
+INFO:vc.fri:main():prover time: 145.61 s
 INFO:vc.fri:main():proof:
-    final polynomial: 10779303811544763966x + 13148289302788285659
-    proof size: 12 KB
+    final polynomial: 1855567058899299786x^7 + 4600117830957223761x^6 + 5934717239621071113x^5 + 12307768292045122762x^4 + 6248177131267026469x^3 + 2068755655230302057x^2 + 15497984996025143503x + 11854724281001709070
+    proof size: 158 KB
 
-INFO:vc.fri:main():verifier time: 32 ms
+INFO:vc.fri:main():verifier time: 1175 ms
 INFO:vc.fri:main():verification result: True
 ```
