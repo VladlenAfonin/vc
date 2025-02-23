@@ -147,21 +147,21 @@ def main() -> int:
         initial_coefficients_length_log=options.initial_degree_log,
         field=field)
 
-    logger.info(f'{fri_parameters = }')
+    logger.info(f'fri parameters:{fri_parameters}')
 
     begin = time.time()
     prover = Prover(fri_parameters)
     proof = prover.prove(g)
     end = time.time()
     logger.info(f'prover time: {end - begin:.2f} s')
-    logger.info(f'{proof = }')
+    logger.info(f'proof:{proof}')
 
     begin = time.time()
     verifier = Verifier(fri_parameters)
     verification_result = verifier.verify(proof)
     end = time.time()
-    logger.info(f'prover time: {(end - begin) * 1000:.0f} ms')
-    logger.info(f'{verification_result = }')
+    logger.info(f'verifier time: {(end - begin) * 1000:.0f} ms')
+    logger.info(f'verification result: {verification_result}')
 
     return 0
 

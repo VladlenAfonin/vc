@@ -13,7 +13,24 @@ def fold_sort_generate(
         query_indices: typing.List[int],
         query_indices_range: int,
         unordered_folded_values: galois.Array
-        ) -> typing.Tuple:
+        ) -> typing.Tuple[int, int, galois.Array]:
+    """This function folds indices, generates check indices used for
+    consistency check in the next round of the FRI protocol and orders
+    these query indices, check indices and evaluations corresponding
+    to these indices in the current round of the FRI protocol.
+
+    :param query_indices: Current query indices.
+    :type query_indices: typing.List[int]
+    :param query_indices_range: New query indices range.
+    :type query_indices_range: int
+    :param unordered_folded_values: Current unordered evaluations
+        corresponding to query indices.
+    :type unordered_folded_values: galois.Array
+    :return: Sorted list of tuples of kind
+        (new query index, check index, evaluation).
+    :rtype: typing.Tuple
+    """
+
     # Get array of tuples [(new_query_index, check_index, folded_value)]
     temp_collected_array = list(
     #    |-Next query index,        |-Check index,              |-Value.

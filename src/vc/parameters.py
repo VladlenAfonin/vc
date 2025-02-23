@@ -47,15 +47,15 @@ class FriParameters:
 
     def __repr__(self) -> str:
         return f"""
-    expansion_factor = {self.expansion_factor}
-    folding_factor = {self.folding_factor}
-    initial_coefficients_length = {self.initial_coefficients_length}
-    final_coefficients_length = {self.final_coefficients_length}
-    initial_evaluation_domain_length = {self.initial_evaluation_domain_length}
+    expansion factor = {self.expansion_factor}
+    folding factor = {self.folding_factor}
+    initial coefficients length = {self.initial_coefficients_length}
+    final coefficients length = {self.final_coefficients_length}
+    initial evaluation domain length = {self.initial_evaluation_domain_length}
 
-    security_level = {self.security_level}
-    number_of_rounds = {self.number_of_rounds}
-    number_of_repetitions = {self.number_of_repetitions}
+    security level = {self.security_level}
+    number of rounds = {self.number_of_rounds}
+    number of repetitions = {self.number_of_repetitions}
         """
 
     def __init__(

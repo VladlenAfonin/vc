@@ -79,22 +79,22 @@ $ vc
 ```
 
 ```
-INFO:vc.fri:main():fri_parameters = 
-    expansion_factor = 8
-    folding_factor = 8
-    initial_coefficients_length = 1024
-    final_coefficients_length = 4
-    initial_evaluation_domain_length = 8192
+INFO:vc.fri:main():fri parameters:
+    expansion factor = 8
+    folding factor = 8
+    initial coefficients length = 1024
+    final coefficients length = 4
+    initial evaluation domain length = 8192
 
-    security_level = 32
-    number_of_rounds = 2
-    number_of_repetitions = 11
+    security level = 32
+    number of rounds = 2
+    number of repetitions = 11
         
-INFO:vc.fri:main():prover time: 17.75 s
-INFO:vc.fri:main():proof = 
-    final polynomial: 4618547800941124052x + 1164068294085142249
-    proof size: 11 KB
+INFO:vc.fri:main():prover time: 17.97 s
+INFO:vc.fri:main():proof:
+    final polynomial: 10779303811544763966x + 13148289302788285659
+    proof size: 12 KB
 
-INFO:vc.fri:main():prover time: 29 ms
-INFO:vc.fri:main():verification_result = True
+INFO:vc.fri:main():verifier time: 32 ms
+INFO:vc.fri:main():verification result: True
 ```
