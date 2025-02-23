@@ -52,6 +52,7 @@ def fold_sort_generate(
 
     return zip(*deduped_array)
 
+
 def fold_indices(
         indices: numpy.ndarray[int],
         indices_range: int
