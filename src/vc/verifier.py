@@ -8,7 +8,7 @@ import galois
 import numpy
 
 from vc.constants import LOGGER_FRI, MEKRLE_HASH_ALGORITHM
-from vc.fold import extend_indices, fold_domain, fold_indices, fold_sort_generate
+from vc.fold import extend_indices, fold_domain, fold_sort_generate
 from vc.merkle import MerkleTree
 from vc.parameters import FriParameters
 from vc.proof import Proof
@@ -78,19 +78,12 @@ class Verifier:
             evaluation_domain_length,
             self._parameters.folding_factor)
 
-        # logger.debug(f'{query_indices = }')
-        # logger.debug(f'{extended_indices = }')
-
         unordered_folded_values = None
         check_indices = None
         folded_values = None
         for i in range(self._parameters.number_of_rounds + 1):
             if check_indices is not None:
                 assert folded_values is not None
-
-                # logger.debug(f'{folded_values = }')
-                # logger.debug(f'{proof.round_proofs[i].stacked_evaluations = }')
-                # logger.debug(f'{check_indices = }')
 
                 for j, se in enumerate(proof.round_proofs[i].stacked_evaluations):
                     temp_result = folded_values[j] == se[check_indices[j]]
@@ -101,10 +94,6 @@ class Verifier:
             unordered_folded_values = []
             for indices, ys in zip(extended_indices, proof.round_proofs[i].stacked_evaluations):
                 xs = evaluation_domain[indices]
-                # logger.debug(f'{indices = }')
-                # logger.debug(f'{xs = }')
-                # logger.debug(f'{ys = }')
-                # logger.debug(f'{folding_randomness_array[i] = }')
                 folded_polynomial = galois.lagrange_poly(xs, ys)
                 unordered_folded_values.append(folded_polynomial(folding_randomness_array[i]))
 
@@ -112,41 +101,21 @@ class Verifier:
             query_indices, check_indices, folded_values = fold_sort_generate(
                 query_indices, query_indices_range, unordered_folded_values)
 
-            # logger.debug(f'{query_indices = }')
-            # logger.debug(f'{check_indices = }')
-            # logger.debug(f'{folded_values = }')
-
             evaluation_domain_length //= self._parameters.folding_factor
             evaluation_domain = fold_domain(evaluation_domain, self._parameters.folding_factor)
-
-            # logger.debug(f'{evaluation_domain = }')
 
             extended_indices = extend_indices(
                 query_indices,
                 evaluation_domain_length,
                 self._parameters.folding_factor)
 
-            # logger.debug(f'{query_indices = }')
-            # logger.debug(f'{extended_indices = }')
-
-            # logger.debug(f'=========================================================')
-
+        # TODO: Refactor without Numpy probably.
         query_indices = numpy.array(query_indices)
         check_indices = numpy.array(check_indices)
-
-        # logger.debug(f'{query_indices = }')
-        # logger.debug(f'{check_indices = }')
-        # logger.debug(f'{query_indices + query_indices_range * check_indices = }')
-        # logger.debug(f'{folded_values = }')
-        # logger.debug(f'{evaluation_domain = }')
-        # logger.debug(f'{proof.final_polynomial(evaluation_domain) = }')
 
         final_polynomial_answers = proof.final_polynomial(
             evaluation_domain[list(query_indices + query_indices_range * check_indices)])
         final_check = all(folded_values == final_polynomial_answers)
-
-        # logger.debug(f'{final_polynomial_answers = }')
-        # logger.debug(f'{folded_values = }')
 
         if not final_check:
             logger.error(f'final check failed')

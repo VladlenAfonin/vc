@@ -4,7 +4,7 @@ import pytest
 
 from vc.constants import TEST_FIELD
 from vc.merkle import MerkleTree
-from vc.polynomial import stack
+from vc.fold import stack
 
 
 def test_append_single():

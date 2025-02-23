@@ -9,7 +9,7 @@ import galois
 from vc import polynomial
 from vc.base import is_pow2
 from vc.constants import MEKRLE_HASH_ALGORITHM, LOGGER_FRI
-from vc.fold import fold_domain, fold_indices, fold_polynomial
+from vc.fold import fold_domain, fold_indices, fold_polynomial, stack
 from vc.proof import Proof, RoundProof
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
@@ -83,7 +83,7 @@ class Prover:
         self._state = Prover.State(f, self._parameters)
 
         initial_round_evaluations = self._state.polynomial(self._state.evaluation_domain)
-        stacked_evaluations = polynomial.stack(
+        stacked_evaluations = stack(
             initial_round_evaluations,
             self._parameters.folding_factor)
         self._state.evaluations.append(stacked_evaluations)
@@ -154,7 +154,7 @@ class Prover:
             self._parameters.folding_factor)
 
         new_round_evaluations = new_polynomial(new_evaluation_domain)
-        stacked_evaluations = polynomial.stack(
+        stacked_evaluations = stack(
             new_round_evaluations,
             self._parameters.folding_factor)
         self._state.evaluations.append(stacked_evaluations)

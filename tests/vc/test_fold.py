@@ -1,9 +1,9 @@
 import galois
+import numpy
 import pytest
 
 from vc.constants import TEST_FIELD
-from vc.fold import extend_indices, fold_domain, fold_polynomial, fold_sort_generate
-from vc.polynomial import stack
+from vc.fold import extend_indices, fold_domain, fold_polynomial, fold_sort_generate, stack
 
 
 @pytest.mark.parametrize(
@@ -27,6 +27,19 @@ def test_fold(
     g_folded = fold_polynomial(g, randomness, folding_factor)
 
     assert g_folded == galois.Poly(expected, field=g.field, order='asc')
+
+
+@pytest.mark.parametrize(
+    'expected, evaluations, folding_factor',
+    [
+        #                       [[1, 4],
+        # [1, 2, 3, 4, 5, 6] ->  [2, 5],
+        #                        [3, 6]]
+        (TEST_FIELD([[1, 4], [2, 5], [3, 6]]), TEST_FIELD([1, 2, 3, 4, 5, 6]), 2)
+    ])
+def test_stack(expected, evaluations, folding_factor):
+    result = stack(evaluations, folding_factor)
+    assert numpy.all(result == expected)
 
 
 def test_consistency_check():

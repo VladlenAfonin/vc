@@ -151,3 +151,20 @@ def fold_domain(domain: galois.Array, folding_factor: int) -> galois.Array:
     assert (domain.size // new_domain.size) == folding_factor
 
     return new_domain
+
+
+def stack(
+        evaluations: galois.Array,
+        folding_factor: int
+        ) -> galois.Array:
+    """Stack evaluations.
+
+    :param evaluations: Polynomial evaluations over some evaluation domain.
+    :type evaluations: galois.Array
+    :param folding_factor: Folding factor.
+    :type folding_factor: int
+    :return: Stacked evaluations.
+    :rtype: galois.Array
+    """
+
+    return evaluations.reshape((folding_factor, -1)).swapaxes(0, 1)
