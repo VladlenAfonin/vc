@@ -50,24 +50,24 @@ It is assumed below that you have installed python from the [official website](h
 $ vc --help
 ```
 ```
-usage: vc [-h] [--ff FACTOR] [--ef FACTOR] [-f MODULUS] [--fd N] [--id N] [--sl LEVEL]
+usage: vc [-h] [--ff FACTOR] [--ef FACTOR] [-f MODULUS] [--fd N] [--id N] [--sl LEVEL]    
 
 FRI polynomial commitment scheme experimentation program
 
 options:
   -h, --help            show this help message and exit
-  --ff, --folding-factor-log FACTOR
+  --ff FACTOR, --folding-factor-log FACTOR
                         folding factor. default: 3
-  --ef, --expansion-factor-log FACTOR
+  --ef FACTOR, --expansion-factor-log FACTOR
                         expansion factor. default: 3
-  -f, --field MODULUS   prime field size. default: 18446744069414584321 (goldilocks
-                        field)
-  --fd, --final-degree-log N
-                        number of coefficients when to stop the protocol. default: 2
-  --id, --initial-degree-log N
+  -f MODULUS, --field MODULUS
+                        prime field size. default: 18446744069414584321 (goldilocks field)
+  --fd N, --final-degree-log N
+                        number of coefficients when to stop the protocol. default: 2      
+  --id N, --initial-degree-log N
                         initial number of coefficients. default: 10
-  --sl, --security-level-log LEVEL
-                        desired security level. default: 5 bits
+  --sl LEVEL, --security-level-bits LEVEL
+                        desired security level in bits. default: 5
 ```
 
 ## Example
@@ -85,7 +85,7 @@ INFO:vc.fri:main():fri parameters:
 
     security level = 10 bits
     number of rounds = 1
-    number of query indices = 256
+    number of query indices = 3
         
 INFO:vc.fri:main():prover time: 145.61 s
 INFO:vc.fri:main():proof:

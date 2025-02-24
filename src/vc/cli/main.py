@@ -46,7 +46,7 @@ class Options:
     """Initial polynomial degree."""
     final_degree_log: int
     """Degree at which to stop."""
-    security_level_log: int
+    security_level_bits: int
     """Number of verifier repetitions."""
     expansion_factor_log: int
     """Expansion factor. Code rate reciprocal."""
@@ -119,10 +119,10 @@ def parse_arguments() -> Options:
 
     parser.add_argument(
         '--sl',
-        '--security-level-log',
+        '--security-level-bits',
         action='store',
-        dest='security_level_log',
-        help='desired security level. default: 5 bits',
+        dest='security_level_bits',
+        help='desired security level in bits. default: 5',
         nargs=1,
         default=[5],
         required=False,
@@ -138,7 +138,7 @@ def parse_arguments() -> Options:
         field=namespace.field[0],
         final_degree_log=namespace.final_degree_log[0],
         initial_degree_log=namespace.initial_degree_log[0],
-        security_level_log=namespace.security_level_log[0],
+        security_level_bits=namespace.security_level_bits[0],
         expansion_factor_log=namespace.expansion_factor_log[0])
 
 
@@ -154,7 +154,7 @@ def main() -> int:
     fri_parameters = FriParameters(
         folding_factor_log=options.folding_factor_log,
         expansion_factor_log=options.expansion_factor_log,
-        security_level_log=options.security_level_log,
+        security_level_bits=options.security_level_bits,
         final_coefficients_length_log=options.final_degree_log,
         initial_coefficients_length_log=options.initial_degree_log,
         field=field)
