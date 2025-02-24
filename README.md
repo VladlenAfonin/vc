@@ -79,19 +79,19 @@ $ vc --ff 4 --id 11 --fd 3 --sl 10 --ef 4
 INFO:vc.fri:main():fri parameters:
     expansion factor = 16 (2^4)
     folding factor = 16 (2^4)
-    initial coefficients length = 2048 (2^3)
+    initial coefficients length = 2048 (2^3)       
     final coefficients length = 8 (2^3)
     initial evaluation domain length = 32768 (2^15)
 
     security level = 10 bits
     number of rounds = 1
     number of query indices = 3
-        
-INFO:vc.fri:main():prover time: 145.61 s
-INFO:vc.fri:main():proof:
-    final polynomial: 1855567058899299786x^7 + 4600117830957223761x^6 + 5934717239621071113x^5 + 12307768292045122762x^4 + 6248177131267026469x^3 + 2068755655230302057x^2 + 15497984996025143503x + 11854724281001709070
-    proof size: 158 KB
 
-INFO:vc.fri:main():verifier time: 1175 ms
+INFO:vc.fri:main():prover time: 209.66 s
+INFO:vc.fri:main():proof:
+    final polynomial: 7665344656090724315x^7 + 15001491804211313564x^6 + 5337035066452422933x^5 + 3942137744011559509x^4 + 12699361532114498063x^3 + 9761565799121261157x^2 + 16551901012716457488x + 7084323875983630801
+    proof size: 4 KB
+
+INFO:vc.fri:main():verifier time: 50 ms
 INFO:vc.fri:main():verification result: True
 ```
