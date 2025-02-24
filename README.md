@@ -1,3 +1,11 @@
+# Disclaimer
+
+This is an academic prototype which is not intended for production use, as it did not receive proper code review.
+
+# About
+
+This repository contains tool for verifiable computations. It is mainly focused on researching STARKs, its components and constructions based on STARKs.
+
 # Setup
 
 ## Linux/macOS
