@@ -43,7 +43,6 @@ def test_stack(expected, evaluations, folding_factor):
 
 
 def test_consistency_check():
-    seed = 0
     field = FIELD_193
     coefficients_length_log = 4
     folding_factor = 2
@@ -52,7 +51,6 @@ def test_consistency_check():
 
     folding_randomness = 14
     coefficients_length = 1 << coefficients_length_log
-    degree = coefficients_length - 1
 
     # 62 + 
     # 107 * x^2 + 
@@ -75,7 +73,6 @@ def test_consistency_check():
         order='asc',
         field=field)
     initial_evaluation_domain_length = coefficients_length * expansion_factor
-    offset = field.primitive_element
     omega = field.primitive_root_of_unity(initial_evaluation_domain_length)
     initial_evaluation_domain = field(
         [(omega ** i) for i in range(initial_evaluation_domain_length)])
@@ -88,14 +85,12 @@ def test_consistency_check():
         initial_polynomial,
         folding_randomness,
         folding_factor)
-    folded_domain_length = initial_evaluation_domain_length // folding_factor
     folded_domain = fold_domain(initial_evaluation_domain, folding_factor)
     folded_evaluations = folded_polynomial(folded_domain)
 
     # This line yields wrong result.
     folded_stacked_evaluations = stack(folded_evaluations, folding_factor)
 
-    query_xs = initial_evaluation_domain[query_indices]
     query_ys = initial_stacked_evaluations[query_indices]
 
     extended_indices = extend_indices(
