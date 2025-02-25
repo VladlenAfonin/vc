@@ -21,10 +21,18 @@ class Sponge:
     """Sponge."""
 
     _field: galois.FieldArray
+    """Field for elements sampling."""
     _objects: typing.List[object]
+    """Current objects array."""
     _len: int
+    """Length of current objects array."""
+    _additional_state: int
+    """Additional Sponge state. This is used so that consecutive squeezes produce different results."""
 
-    def __init__(self, field: galois.FieldArray) -> None:
+    def __init__(
+            self,
+            field: galois.FieldArray
+            ) -> None:
         """Initialize new Sponge.
 
         :param field: Field to use when sampling field elements.
@@ -34,13 +42,17 @@ class Sponge:
         self._objects = []
         self._field = field
         self._len = 0
+        self._additional_state = 0
 
     def _serialize(self) -> bytes:
         """Serialize current state into byte array."""
 
         return pickle.dumps(self._objects)
 
-    def absorb(self, obj: typing.Any) -> None:
+    def absorb(
+            self,
+            obj: typing.Any
+            ) -> None:
         """Push data to the proof stream.
 
         :param obj: Arbitrary data to push.
@@ -50,7 +62,10 @@ class Sponge:
         self._len += 1
         self._objects.append(obj)
 
-    def squeeze(self, n: int = 32) -> bytes:
+    def squeeze(
+            self,
+            n: int = 32
+            ) -> bytes:
         """Sample random data. This function is to be called by the prover.
 
         :param n: Number of bytes to squeeze, defaults to 32.
@@ -61,8 +76,17 @@ class Sponge:
 
         return self._squeeze(n)
 
-    def squeeze_field_element(self, n: int = 32) -> galois.FieldArray:
-        """Sample random field element. This function is to be called by the prover."""
+    def squeeze_field_element(
+            self,
+            n: int = 32
+            ) -> galois.FieldArray:
+        """Sample random field element. This function is to be called by the prover.
+
+        :param n: Number of bytes to squeeze, defaults to 32.
+        :type n: int, optional
+        :return: Squeezed field element.
+        :rtype: galois.FieldArray
+        """
 
         return self._squeeze_field_element(n)
 
@@ -79,7 +103,12 @@ class Sponge:
 
         return self._squeeze_number(upper_bound, n)
 
-    def squeeze_indices(self, amount: int, upper_bound: int, n: int = 32) -> numpy.ndarray[int]:
+    def squeeze_indices(
+            self,
+            amount: int,
+            upper_bound: int,
+            n: int = 32
+            ) -> numpy.ndarray[int]:
         """Sample an array of distinct random numbers up to upper bound.
 
         :param amount: Number of indices to squeeze.
@@ -110,7 +139,10 @@ class Sponge:
 
         return numpy.sort(numpy.array(result))
 
-    def _squeeze_field_element(self, n: int) -> galois.Array:
+    def _squeeze_field_element(
+            self,
+            n: int
+            ) -> galois.Array:
         """Squeeze a field element.
 
         :param n: Number of bytes to use when squeezing.
@@ -126,7 +158,8 @@ class Sponge:
             self,
             upper_bound: int,
             n: int,
-            postfix: bytes = b'') -> int:
+            postfix: bytes = b''
+            ) -> int:
         """Squeeze a number.
 
         :param upper_bound: Upper bound.
@@ -147,10 +180,14 @@ class Sponge:
 
         return accumulator % upper_bound
 
-    def _squeeze(self, n: int, postfix: bytes = b'') -> bytes:
+    def _squeeze(
+            self,
+            n: int,
+            postfix: bytes = b''
+            ) -> bytes:
         """Squeeze bytes.
         This uses Fiat-Shamir sampling base on current verifier view.
-        
+
         :param n: Number of bytes to squeeze.
         :type n: int
         :param postfix: Additional postfix to use when sampling.
@@ -160,6 +197,7 @@ class Sponge:
         """
 
         current_state = self._serialize()
-        result = hashlib.shake_256(current_state + postfix).digest(n)
+        result = hashlib.shake_256(bytes(self._additional_state) + current_state + postfix).digest(n)
+        self._additional_state += 1
 
         return result
