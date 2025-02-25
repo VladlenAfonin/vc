@@ -197,7 +197,7 @@ class Sponge:
         """
 
         current_state = self._serialize()
-        result = hashlib.shake_256(bytes(self._additional_state) + current_state + postfix).digest(n)
-        self._additional_state += 1
+        result = hashlib.shake_256(current_state + postfix).digest(n)
+        # self._additional_state += 1
 
         return result

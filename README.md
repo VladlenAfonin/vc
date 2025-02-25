@@ -92,25 +92,25 @@ options:
 ## Example
 
 ```
-$ vc --ff 4 --id 11 --fd 3 --sl 10 --ef 4
+$ vc --ff 3 --id 10 --fd 1 --sl 16 --ef 2
 ```
 ```
 INFO:vc.fri:main():fri parameters:
-    expansion factor = 16 (2^4)
-    folding factor = 16 (2^4)
-    initial coefficients length = 2048 (2^3)       
-    final coefficients length = 8 (2^3)
-    initial evaluation domain length = 32768 (2^15)
+    expansion factor = 4 (2^2)
+    folding factor = 8 (2^3)
+    initial coefficients length = 1024 (2^1)
+    final coefficients length = 2 (2^1)
+    initial evaluation domain length = 4096 (2^12)
 
-    security level = 10 bits
-    number of rounds = 1
-    number of query indices = 3
+    security level = 16 bits
+    number of rounds = 2
+    number of query indices = 8
 
-INFO:vc.fri:main():prover time: 209.66 s
+INFO:vc.fri:main():prover time: 13.39 s
 INFO:vc.fri:main():proof:
-    final polynomial: 7665344656090724315x^7 + 15001491804211313564x^6 + 5337035066452422933x^5 + 3942137744011559509x^4 + 12699361532114498063x^3 + 9761565799121261157x^2 + 16551901012716457488x + 7084323875983630801
-    proof size: 4 KB
+    final polynomial: 7316626253158583747x + 4533784301111763252
+    proof size: 8 KB
 
-INFO:vc.fri:main():verifier time: 50 ms
+INFO:vc.fri:main():verifier time: 42 ms
 INFO:vc.fri:main():verification result: True
 ```
