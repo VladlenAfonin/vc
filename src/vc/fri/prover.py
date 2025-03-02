@@ -9,7 +9,7 @@ import galois
 from vc.base import is_pow2
 from vc.constants import LOGGER_FRI
 from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
-from vc.fri.proof import Proof, RoundProof
+from vc.fri.proof import FriProof, RoundProof
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
@@ -19,7 +19,7 @@ logger = logging.getLogger(LOGGER_FRI)
 
 
 @dataclasses.dataclass(init=False, slots=True)
-class Prover:
+class FriProver:
     """FRI Prover."""
 
     @dataclasses.dataclass(init=False, slots=True)
@@ -59,7 +59,7 @@ class Prover:
 
     _parameters: FriParameters
     """Public Prover options."""
-    _state: Prover.State | None
+    _state: FriProver.State | None
     """Internal Prover state."""
 
     def __init__(self, options: FriParameters) -> None:
@@ -73,13 +73,13 @@ class Prover:
         self._parameters = options
         self._state = None
 
-    def prove(self, f: galois.Poly) -> Proof:
+    def prove(self, f: galois.Poly) -> FriProof:
         """Prover that polynomial f is close to RS-code.
 
         :param f: Polynomial to be proven.
         """
 
-        self._state = Prover.State(f, self._parameters)
+        self._state = FriProver.State(f, self._parameters)
 
         initial_round_evaluations = self._state.polynomial(self._state.evaluation_domain)
         stacked_evaluations = stack(
@@ -126,7 +126,7 @@ class Prover:
             final_randomness,
             self._parameters.folding_factor)
 
-        result = Proof(round_proofs, self._state.merkle_roots, final_polynomial)
+        result = FriProof(round_proofs, self._state.merkle_roots, final_polynomial)
 
         return result
 

@@ -21,7 +21,7 @@ class RoundProof:
 
 
 @dataclasses.dataclass(slots=True)
-class Proof:
+class FriProof:
     round_proofs: typing.List[RoundProof]
     merkle_roots: typing.List[bytes]
     final_polynomial: galois.Poly

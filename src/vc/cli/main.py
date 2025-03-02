@@ -8,9 +8,9 @@ import time
 import galois
 
 from vc.constants import FIELD_GOLDILOCKS, LOGGER_FRI
-from vc.fri.prover import Prover
+from vc.fri.prover import FriProver
 from vc.fri.parameters import FriParameters
-from vc.fri.verifier import Verifier
+from vc.fri.verifier import FriVerifier
 
 
 logger = logging.getLogger(LOGGER_FRI)
@@ -35,9 +35,19 @@ logging_config = {
 }
 
 
+class FriOptionsDefault:
+    folding_factor_log_default: int = 3
+    field_default: int = FIELD_GOLDILOCKS.order
+    initial_degree_log_default: int = 10
+    final_degree_log_default: int = 2
+    security_level_bits_default: int = 5
+    expansion_factor_log_default: int = 3
+
+
 @dataclasses.dataclass(slots=True)
-class Options:
+class FriOptions:
     """Command line options."""
+
     folding_factor_log: int
     """Folding factor."""
     field: int
@@ -52,7 +62,7 @@ class Options:
     """Expansion factor. Code rate reciprocal."""
 
 
-def parse_arguments() -> Options:
+def parse_arguments() -> FriOptions:
     parser = argparse.ArgumentParser(
         prog='vc',
         description='FRI polynomial commitment scheme experimentation program')
@@ -62,9 +72,9 @@ def parse_arguments() -> Options:
         '--folding-factor-log',
         action='store',
         dest='folding_factor_log',
-        help='folding factor. default: 3',
+        help=f'folding factor. default: {FriOptionsDefault.folding_factor_log_default}',
         nargs=1,
-        default=[3],
+        default=[FriOptionsDefault.folding_factor_log_default],
         required=False,
         metavar='FACTOR',
         type=int)
@@ -74,9 +84,9 @@ def parse_arguments() -> Options:
         '--expansion-factor-log',
         action='store',
         dest='expansion_factor_log',
-        help='expansion factor. default: 3',
+        help=f'expansion factor. default: {FriOptionsDefault.expansion_factor_log_default}',
         nargs=1,
-        default=[3],
+        default=[FriOptionsDefault.expansion_factor_log_default],
         required=False,
         metavar='FACTOR',
         type=int)
@@ -86,9 +96,9 @@ def parse_arguments() -> Options:
         '--field',
         action='store',
         dest='field',
-        help='prime field size. default: 18446744069414584321 (goldilocks field)',
+        help=f'prime field size. default: {FriOptionsDefault.field_default}',
         nargs=1,
-        default=[18446744069414584321],
+        default=[FriOptionsDefault.field_default],
         required=False,
         metavar='MODULUS',
         type=int)
@@ -98,9 +108,9 @@ def parse_arguments() -> Options:
         '--final-degree-log',
         action='store',
         dest='final_degree_log',
-        help='number of coefficients when to stop the protocol. default: 2',
+        help=f'number of coefficients when to stop the protocol. default: {FriOptionsDefault.final_degree_log_default}',
         nargs=1,
-        default=[2],
+        default=[FriOptionsDefault.final_degree_log_default],
         required=False,
         metavar='N',
         type=int)
@@ -110,9 +120,9 @@ def parse_arguments() -> Options:
         '--initial-degree-log',
         action='store',
         dest='initial_degree_log',
-        help='initial number of coefficients. default: 10',
+        help=f'initial number of coefficients. default: {FriOptionsDefault.initial_degree_log_default}',
         nargs=1,
-        default=[10],
+        default=[FriOptionsDefault.initial_degree_log_default],
         required=False,
         metavar='N',
         type=int)
@@ -122,9 +132,9 @@ def parse_arguments() -> Options:
         '--security-level-bits',
         action='store',
         dest='security_level_bits',
-        help='desired security level in bits. default: 5',
+        help=f'desired security level in bits. default: {FriOptionsDefault.security_level_bits_default}',
         nargs=1,
-        default=[5],
+        default=[FriOptionsDefault.security_level_bits_default],
         required=False,
         metavar='LEVEL',
         type=int)
@@ -133,7 +143,7 @@ def parse_arguments() -> Options:
 
     # TODO: Add argument verification.
 
-    return Options(
+    return FriOptions(
         folding_factor_log=namespace.folding_factor_log[0],
         field=namespace.field[0],
         final_degree_log=namespace.final_degree_log[0],
@@ -146,9 +156,7 @@ def main() -> int:
     logging.config.dictConfig(logging_config)
 
     options = parse_arguments()
-
     field = galois.GF(options.field)
-
     g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
 
     fri_parameters = FriParameters(
@@ -163,21 +171,21 @@ def main() -> int:
 
     try:
         begin = time.time()
-        prover = Prover(fri_parameters)
+        prover = FriProver(fri_parameters)
         proof = prover.prove(g)
         end = time.time()
         logger.info(f'prover time: {end - begin:.2f} s')
         logger.info(f'proof:{proof}')
 
         begin = time.time()
-        verifier = Verifier(fri_parameters)
+        verifier = FriVerifier(fri_parameters)
         verification_result = verifier.verify(proof)
         end = time.time()
         logger.info(f'verifier time: {(end - begin) * 1000:.0f} ms')
         logger.info(f'verification result: {verification_result}')
     except Exception as exception:
         logger.error(f'coefficients of the polynomial which caused an error (in ascending order): {g.coefficients(order='asc')}')
-        logger.error(f'{exception}')
+        logger.exception(f'error message: {exception}')
         raise
 
     return 0

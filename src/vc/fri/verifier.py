@@ -11,7 +11,7 @@ from vc.constants import LOGGER_FRI
 from vc.fri.fold import extend_indices, fold_domain, fold_sort_generate
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
-from vc.fri.proof import Proof
+from vc.fri.proof import FriProof
 from vc.sponge import Sponge
 
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(LOGGER_FRI)
 
 
 @dataclasses.dataclass(init=False, slots=True)
-class Verifier:
+class FriVerifier:
     """FRI Verifier."""
 
     @dataclasses.dataclass(slots=True)
@@ -32,16 +32,16 @@ class Verifier:
         """Initial evaluation domain."""
 
     _parameters: FriParameters
-    _state: Verifier.State
+    _state: FriVerifier.State
 
     def __init__(self, parameters: FriParameters) -> None:
         self._parameters = parameters
         sponge = Sponge(parameters.field)
-        self._state = Verifier.State(
+        self._state = FriVerifier.State(
             sponge=sponge,
             initial_evaluation_domain=parameters.initial_evaluation_domain)
 
-    def verify(self, proof: Proof) -> bool:
+    def verify(self, proof: FriProof) -> bool:
         """Verify proof.
 
         :param proof: Proof for some polynomial.
