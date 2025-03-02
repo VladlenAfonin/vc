@@ -8,9 +8,9 @@ import time
 import galois
 
 from vc.constants import FIELD_GOLDILOCKS, LOGGER_FRI
-from vc.prover import Prover
-from vc.parameters import FriParameters
-from vc.verifier import Verifier
+from vc.fri.prover import Prover
+from vc.fri.parameters import FriParameters
+from vc.fri.verifier import Verifier
 
 
 logger = logging.getLogger(LOGGER_FRI)

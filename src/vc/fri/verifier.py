@@ -8,10 +8,10 @@ import galois
 import numpy
 
 from vc.constants import LOGGER_FRI
-from vc.fold import extend_indices, fold_domain, fold_sort_generate
+from vc.fri.fold import extend_indices, fold_domain, fold_sort_generate
 from vc.merkle import MerkleTree
-from vc.parameters import FriParameters
-from vc.proof import Proof
+from vc.fri.parameters import FriParameters
+from vc.fri.proof import Proof
 from vc.sponge import Sponge
 
 

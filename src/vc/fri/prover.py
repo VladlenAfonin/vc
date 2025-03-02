@@ -8,11 +8,11 @@ import galois
 
 from vc.base import is_pow2
 from vc.constants import LOGGER_FRI
-from vc.fold import fold_domain, fold_indices, fold_polynomial, stack
-from vc.proof import Proof, RoundProof
+from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
+from vc.fri.proof import Proof, RoundProof
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
-from vc.parameters import FriParameters
+from vc.fri.parameters import FriParameters
 
 
 logger = logging.getLogger(LOGGER_FRI)

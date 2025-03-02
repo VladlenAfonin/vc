@@ -3,7 +3,7 @@ import numpy
 import pytest
 
 from vc.constants import FIELD_193
-from vc.fold import extend_indices, fold_domain, fold_polynomial, fold_sort_generate, stack
+from vc.fri.fold import extend_indices, fold_domain, fold_polynomial, fold_sort_generate, stack
 
 
 @pytest.mark.parametrize(

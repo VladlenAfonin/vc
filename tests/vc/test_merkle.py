@@ -4,7 +4,7 @@ import pytest
 
 from vc.constants import FIELD_193
 from vc.merkle import MerkleTree
-from vc.fold import stack
+from vc.fri.fold import stack
 
 
 def test_append_single():
