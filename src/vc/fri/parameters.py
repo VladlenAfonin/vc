@@ -59,7 +59,7 @@ class FriParameters:
     security level = {self.security_level_bits} bits
     number of rounds = {self.number_of_rounds}
     number of query indices = {self.number_of_repetitions}
-        """
+"""
 
     def __init__(
             self,
