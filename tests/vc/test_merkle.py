@@ -22,7 +22,7 @@ def test_append_single():
 
 
 @pytest.mark.parametrize(
-    'indices',
+    "indices",
     [
         ([0]),
         ([1]),
@@ -30,8 +30,9 @@ def test_append_single():
         ([0, 1, 2]),
         ([0, 1, 3]),
         ([2, 3]),
-        ([1, 0])
-    ])
+        ([1, 0]),
+    ],
+)
 def test_append_bulk(indices: typing.List[int]):
     field = FIELD_193
     merkle_tree = MerkleTree()

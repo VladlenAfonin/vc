@@ -39,7 +39,8 @@ class FriVerifier:
         sponge = Sponge(parameters.field)
         self._state = FriVerifier.State(
             sponge=sponge,
-            initial_evaluation_domain=parameters.initial_evaluation_domain)
+            initial_evaluation_domain=parameters.initial_evaluation_domain,
+        )
 
     def verify(self, proof: FriProof) -> bool:
         """Verify proof.
@@ -50,13 +51,18 @@ class FriVerifier:
         :rtype: bool
         """
 
-        if proof.final_polynomial.degree + 1 > self._parameters.final_coefficients_length:
-            logger.error(f'invalid final polynomial degree')
+        if (
+            proof.final_polynomial.degree + 1
+            > self._parameters.final_coefficients_length
+        ):
+            logger.error(f"invalid final polynomial degree")
             return False
 
         for merkle_root, round_proof in zip(proof.merkle_roots, proof.round_proofs):
-            if not MerkleTree.verify_bulk(round_proof.stacked_evaluations, merkle_root, round_proof.proofs):
-                logger.error(f'invalid merkle tree proofs')
+            if not MerkleTree.verify_bulk(
+                round_proof.stacked_evaluations, merkle_root, round_proof.proofs
+            ):
+                logger.error(f"invalid merkle tree proofs")
                 return False
 
         folding_randomness_array: typing.List[galois.Array] = []
@@ -67,16 +73,16 @@ class FriVerifier:
         evaluation_domain = self._parameters.initial_evaluation_domain
         evaluation_domain_length = self._parameters.initial_evaluation_domain_length
 
-        query_indices_range = \
-            self._parameters.initial_evaluation_domain_length // \
-            self._parameters.folding_factor
+        query_indices_range = (
+            self._parameters.initial_evaluation_domain_length
+            // self._parameters.folding_factor
+        )
         query_indices = self._state.sponge.squeeze_indices(
-            self._parameters.number_of_repetitions,
-            query_indices_range)
+            self._parameters.number_of_repetitions, query_indices_range
+        )
         extended_indices = extend_indices(
-            query_indices,
-            evaluation_domain_length,
-            self._parameters.folding_factor)
+            query_indices, evaluation_domain_length, self._parameters.folding_factor
+        )
 
         unordered_folded_values = None
         check_indices = None
@@ -88,36 +94,43 @@ class FriVerifier:
                 for j, se in enumerate(proof.round_proofs[i].stacked_evaluations):
                     temp_result = folded_values[j] == se[check_indices[j]]
                     if not temp_result:
-                        logger.error(f'consistency check failed')
+                        logger.error(f"consistency check failed")
                         return False
 
             unordered_folded_values = []
-            for indices, ys in zip(extended_indices, proof.round_proofs[i].stacked_evaluations):
+            for indices, ys in zip(
+                extended_indices, proof.round_proofs[i].stacked_evaluations
+            ):
                 xs = evaluation_domain[indices]
                 folded_polynomial = galois.lagrange_poly(xs, ys)
-                unordered_folded_values.append(folded_polynomial(folding_randomness_array[i]))
+                unordered_folded_values.append(
+                    folded_polynomial(folding_randomness_array[i])
+                )
 
             query_indices_range //= self._parameters.folding_factor
             query_indices, check_indices, folded_values = fold_sort_generate(
-                query_indices, query_indices_range, unordered_folded_values)
+                query_indices, query_indices_range, unordered_folded_values
+            )
 
             evaluation_domain_length //= self._parameters.folding_factor
-            evaluation_domain = fold_domain(evaluation_domain, self._parameters.folding_factor)
+            evaluation_domain = fold_domain(
+                evaluation_domain, self._parameters.folding_factor
+            )
 
             extended_indices = extend_indices(
-                query_indices,
-                evaluation_domain_length,
-                self._parameters.folding_factor)
+                query_indices, evaluation_domain_length, self._parameters.folding_factor
+            )
 
         # TODO: Refactor without Numpy.
         query_indices = numpy.array(query_indices)
         check_indices = numpy.array(check_indices)
 
         final_polynomial_answers = proof.final_polynomial(
-            evaluation_domain[list(query_indices + query_indices_range * check_indices)])
+            evaluation_domain[list(query_indices + query_indices_range * check_indices)]
+        )
         final_check = all(folded_values == final_polynomial_answers)
 
         if not final_check:
-            logger.error(f'final check failed')
+            logger.error(f"final check failed")
 
         return final_check

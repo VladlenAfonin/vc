@@ -62,15 +62,16 @@ class FriParameters:
 """
 
     def __init__(
-            self,
-            folding_factor_log: int,
-            expansion_factor_log: int,
-            security_level_bits: int,
-            initial_coefficients_length_log: int,
-            final_coefficients_length_log: int,
-            field: galois.FieldArray) -> None:
-        assert folding_factor_log > 0, 'folding factor log must be at least 1'
-        assert expansion_factor_log > 0, 'expansion factor log must be at least 1'
+        self,
+        folding_factor_log: int,
+        expansion_factor_log: int,
+        security_level_bits: int,
+        initial_coefficients_length_log: int,
+        final_coefficients_length_log: int,
+        field: galois.FieldArray,
+    ) -> None:
+        assert folding_factor_log > 0, "folding factor log must be at least 1"
+        assert expansion_factor_log > 0, "expansion factor log must be at least 1"
 
         self.field = field
         self.security_level_bits = security_level_bits
@@ -82,37 +83,49 @@ class FriParameters:
         self.initial_coefficients_length = 1 << initial_coefficients_length_log
         self.final_coefficients_length_log = final_coefficients_length_log
         self.final_coefficients_length = 1 << final_coefficients_length_log
-        self.initial_evaluation_domain_length = self.initial_coefficients_length * self.expansion_factor
+        self.initial_evaluation_domain_length = (
+            self.initial_coefficients_length * self.expansion_factor
+        )
 
         self.offset = field.primitive_element
-        self.omega = field.primitive_root_of_unity(self.initial_evaluation_domain_length)
+        self.omega = field.primitive_root_of_unity(
+            self.initial_evaluation_domain_length
+        )
         self.initial_evaluation_domain = field(
-            [self.offset * (self.omega ** i) for i in range(self.initial_evaluation_domain_length)])
+            [
+                self.offset * (self.omega**i)
+                for i in range(self.initial_evaluation_domain_length)
+            ]
+        )
 
         self.number_of_repetitions = self._get_number_of_repetitions(
-            self.security_level_bits,
-            self.expansion_factor_log)
+            self.security_level_bits, self.expansion_factor_log
+        )
 
         self.number_of_rounds = self._get_number_of_rounds(
             self.initial_coefficients_length,
             self.final_coefficients_length,
-            self.folding_factor)
+            self.folding_factor,
+        )
 
     @staticmethod
     def _get_number_of_repetitions(
-            security_level_bits: int,
-            expansion_factor_log: int) -> int:
+        security_level_bits: int, expansion_factor_log: int
+    ) -> int:
         quotient = security_level_bits / expansion_factor_log
         return math.ceil(quotient)
 
     @staticmethod
     def _get_number_of_rounds(
-            initial_coefficients_length,
-            final_coefficients_length,
-            folding_factor) -> int:
-        assert is_pow2(initial_coefficients_length), 'initial coefficients length must be a power of two'
-        assert is_pow2(final_coefficients_length), 'final coefficients length must be a power of two'
-        assert is_pow2(folding_factor), 'folding factor must be a power of two'
+        initial_coefficients_length, final_coefficients_length, folding_factor
+    ) -> int:
+        assert is_pow2(
+            initial_coefficients_length
+        ), "initial coefficients length must be a power of two"
+        assert is_pow2(
+            final_coefficients_length
+        ), "final coefficients length must be a power of two"
+        assert is_pow2(folding_factor), "folding factor must be a power of two"
 
         current_coefficients_length = initial_coefficients_length
         accumulator: int = 0

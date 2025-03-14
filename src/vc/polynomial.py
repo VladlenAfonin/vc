@@ -8,10 +8,7 @@ from vc.constants import LOGGER_MATH
 logger = logging.getLogger(LOGGER_MATH)
 
 
-def quotient(
-        g: galois.Poly,
-        xs: galois.Array
-        ) -> galois.Poly:
+def quotient(g: galois.Poly, xs: galois.Array) -> galois.Poly:
     """Get a polynomial quotient over a vanishing set of a polynomial.
 
     :param g: Polynomial.
@@ -26,11 +23,7 @@ def quotient(
     return g // galois.Poly.Roots(xs)
 
 
-def degree_correct(
-        g: galois.Poly,
-        randomness: int,
-        n: int
-        ) -> galois.Poly:
+def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     """Correct the degree of a given polynomial using a random polynomial.
 
     :param g: Polynomial to be degree-corrected.
@@ -43,5 +36,7 @@ def degree_correct(
     :rtype: galois.Poly
     """
 
-    random_polynomial = galois.Poly([randomness ** power for power in range(n + 1)], field=g.field)
+    random_polynomial = galois.Poly(
+        [randomness**power for power in range(n + 1)], field=g.field
+    )
     return g * random_polynomial

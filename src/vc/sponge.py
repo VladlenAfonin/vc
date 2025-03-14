@@ -7,6 +7,7 @@ import pickle
 import typing
 
 import galois
+from galois.typing import ArrayLike
 import numpy
 
 from vc.constants import LOGGER_MATH
@@ -20,7 +21,7 @@ BYTE_SIZE_BITS = 8
 class Sponge:
     """Sponge."""
 
-    _field: galois.FieldArray
+    _field: ArrayLike
     """Field for elements sampling."""
     _objects: typing.List[object]
     """Current objects array."""
@@ -29,14 +30,11 @@ class Sponge:
     _additional_state: int
     """Additional Sponge state. This is used so that consecutive squeezes produce different results."""
 
-    def __init__(
-            self,
-            field: galois.FieldArray
-            ) -> None:
+    def __init__(self, field: ArrayLike) -> None:
         """Initialize new Sponge.
 
         :param field: Field to use when sampling field elements.
-        :type field: galois.FieldArray
+        :type field: type[galois.FieldArray]
         """
 
         self._objects = []
@@ -49,10 +47,7 @@ class Sponge:
 
         return pickle.dumps(self._objects)
 
-    def absorb(
-            self,
-            obj: typing.Any
-            ) -> None:
+    def absorb(self, obj: typing.Any) -> None:
         """Push data to the proof stream.
 
         :param obj: Arbitrary data to push.
@@ -62,10 +57,7 @@ class Sponge:
         self._len += 1
         self._objects.append(obj)
 
-    def squeeze(
-            self,
-            n: int = 32
-            ) -> bytes:
+    def squeeze(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the prover.
 
         :param n: Number of bytes to squeeze, defaults to 32.
@@ -76,10 +68,7 @@ class Sponge:
 
         return self._squeeze(n)
 
-    def squeeze_field_element(
-            self,
-            n: int = 32
-            ) -> galois.FieldArray:
+    def squeeze_field_element(self, n: int = 32) -> galois.Array:
         """Sample random field element. This function is to be called by the prover.
 
         :param n: Number of bytes to squeeze, defaults to 32.
@@ -104,11 +93,8 @@ class Sponge:
         return self._squeeze_number(upper_bound, n)
 
     def squeeze_indices(
-            self,
-            amount: int,
-            upper_bound: int,
-            n: int = 32
-            ) -> numpy.ndarray[int]:
+        self, amount: int, upper_bound: int, n: int = 32
+    ) -> numpy.ndarray:
         """Sample an array of distinct random numbers up to upper bound.
 
         :param amount: Number of indices to squeeze.
@@ -121,11 +107,11 @@ class Sponge:
         :rtype: typing.List[int]
         """
 
-        assert amount <= upper_bound, 'not enough integers to sample indices from'
+        assert amount <= upper_bound, "not enough integers to sample indices from"
 
         if amount == upper_bound:
-            return list(range(upper_bound))
- 
+            return numpy.sort(numpy.array(range(upper_bound)))
+
         result = []
         i = 0
         result_length = 0
@@ -139,10 +125,7 @@ class Sponge:
 
         return numpy.sort(numpy.array(result))
 
-    def _squeeze_field_element(
-            self,
-            n: int
-            ) -> galois.Array:
+    def _squeeze_field_element(self, n: int) -> galois.Array:
         """Squeeze a field element.
 
         :param n: Number of bytes to use when squeezing.
@@ -154,12 +137,7 @@ class Sponge:
         random_number = self._squeeze_number(self._field.order, n)
         return self._field(random_number)
 
-    def _squeeze_number(
-            self,
-            upper_bound: int,
-            n: int,
-            postfix: bytes = b''
-            ) -> int:
+    def _squeeze_number(self, upper_bound: int, n: int, postfix: bytes = b"") -> int:
         """Squeeze a number.
 
         :param upper_bound: Upper bound.
@@ -180,11 +158,7 @@ class Sponge:
 
         return accumulator % upper_bound
 
-    def _squeeze(
-            self,
-            n: int,
-            postfix: bytes = b''
-            ) -> bytes:
+    def _squeeze(self, n: int, postfix: bytes = b"") -> bytes:
         """Squeeze bytes.
         This uses Fiat-Shamir sampling base on current verifier view.
 

@@ -19,19 +19,19 @@ logging_config = {
     "disable_existing_loggers": False,
     "formatters": {
         "simple": {
-            "format": "%(levelname)s:%(name)s:%(funcName)s():%(message)s"
+            "format": "%(levelname)s:%(name)s:%(funcName)s():%(message)s",
         }
     },
     "handlers": {
         "stdout": {
             "class": "logging.StreamHandler",
             "formatter": "simple",
-            "stream": "ext://sys.stdout"
+            "stream": "ext://sys.stdout",
         }
     },
     "loggers": {
-        "vc": { "level": "DEBUG", "handlers": ["stdout"] }
-    }
+        "vc": {"level": "DEBUG", "handlers": ["stdout"]},
+    },
 }
 
 
@@ -64,80 +64,87 @@ class FriOptions:
 
 def parse_arguments() -> FriOptions:
     parser = argparse.ArgumentParser(
-        prog='vc',
-        description='FRI polynomial commitment scheme experimentation program')
+        prog="vc",
+        description="FRI polynomial commitment scheme experimentation program",
+    )
 
     parser.add_argument(
-        '--ff',
-        '--folding-factor-log',
-        action='store',
-        dest='folding_factor_log',
-        help=f'folding factor. default: {FriOptionsDefault.folding_factor_log_default}',
+        "--ff",
+        "--folding-factor-log",
+        action="store",
+        dest="folding_factor_log",
+        help=f"folding factor. default: {FriOptionsDefault.folding_factor_log_default}",
         nargs=1,
         default=[FriOptionsDefault.folding_factor_log_default],
         required=False,
-        metavar='FACTOR',
-        type=int)
+        metavar="FACTOR",
+        type=int,
+    )
 
     parser.add_argument(
-        '--ef',
-        '--expansion-factor-log',
-        action='store',
-        dest='expansion_factor_log',
-        help=f'expansion factor. default: {FriOptionsDefault.expansion_factor_log_default}',
+        "--ef",
+        "--expansion-factor-log",
+        action="store",
+        dest="expansion_factor_log",
+        help=f"expansion factor. default: {FriOptionsDefault.expansion_factor_log_default}",
         nargs=1,
         default=[FriOptionsDefault.expansion_factor_log_default],
         required=False,
-        metavar='FACTOR',
-        type=int)
+        metavar="FACTOR",
+        type=int,
+    )
 
     parser.add_argument(
-        '-f',
-        '--field',
-        action='store',
-        dest='field',
-        help=f'prime field size. default: {FriOptionsDefault.field_default}',
+        "-f",
+        "--field",
+        action="store",
+        dest="field",
+        help=f"prime field size. default: {FriOptionsDefault.field_default}",
         nargs=1,
         default=[FriOptionsDefault.field_default],
         required=False,
-        metavar='MODULUS',
-        type=int)
+        metavar="MODULUS",
+        type=int,
+    )
 
     parser.add_argument(
-        '--fd',
-        '--final-degree-log',
-        action='store',
-        dest='final_degree_log',
-        help=f'number of coefficients when to stop the protocol. default: {FriOptionsDefault.final_degree_log_default}',
+        "--fd",
+        "--final-degree-log",
+        action="store",
+        dest="final_degree_log",
+        help=f"number of coefficients when to stop the protocol. default: {FriOptionsDefault.final_degree_log_default}",
         nargs=1,
         default=[FriOptionsDefault.final_degree_log_default],
         required=False,
-        metavar='N',
-        type=int)
+        metavar="N",
+        type=int,
+    )
 
     parser.add_argument(
-        '--id',
-        '--initial-degree-log',
-        action='store',
-        dest='initial_degree_log',
-        help=f'initial number of coefficients. default: {FriOptionsDefault.initial_degree_log_default}',
+        "--id",
+        "--initial-degree-log",
+        action="store",
+        dest="initial_degree_log",
+        help=f"initial number of coefficients. default: {FriOptionsDefault.initial_degree_log_default}",
         nargs=1,
         default=[FriOptionsDefault.initial_degree_log_default],
         required=False,
-        metavar='N',
-        type=int)
+        metavar="N",
+        type=int,
+    )
 
     parser.add_argument(
-        '--sl',
-        '--security-level-bits',
-        action='store',
-        dest='security_level_bits',
-        help=f'desired security level in bits. default: {FriOptionsDefault.security_level_bits_default}',
+        "--sl",
+        "--security-level-bits",
+        action="store",
+        dest="security_level_bits",
+        help=f"desired security level in bits. default: {FriOptionsDefault.security_level_bits_default}",
         nargs=1,
         default=[FriOptionsDefault.security_level_bits_default],
         required=False,
-        metavar='LEVEL',
-        type=int)
+        metavar="LEVEL",
+        type=int,
+    )
 
     namespace = parser.parse_args()
 
@@ -149,7 +156,8 @@ def parse_arguments() -> FriOptions:
         final_degree_log=namespace.final_degree_log[0],
         initial_degree_log=namespace.initial_degree_log[0],
         security_level_bits=namespace.security_level_bits[0],
-        expansion_factor_log=namespace.expansion_factor_log[0])
+        expansion_factor_log=namespace.expansion_factor_log[0],
+    )
 
 
 def main() -> int:
@@ -165,31 +173,34 @@ def main() -> int:
         security_level_bits=options.security_level_bits,
         final_coefficients_length_log=options.final_degree_log,
         initial_coefficients_length_log=options.initial_degree_log,
-        field=field)
+        field=field,
+    )
 
-    logger.info(f'fri parameters:{fri_parameters}')
+    logger.info(f"fri parameters:{fri_parameters}")
 
     try:
         begin = time.time()
         prover = FriProver(fri_parameters)
         proof = prover.prove(g)
         end = time.time()
-        logger.info(f'prover time: {end - begin:.2f} s')
-        logger.info(f'proof:{proof}')
+        logger.info(f"prover time: {end - begin:.2f} s")
+        logger.info(f"proof:{proof}")
 
         begin = time.time()
         verifier = FriVerifier(fri_parameters)
         verification_result = verifier.verify(proof)
         end = time.time()
-        logger.info(f'verifier time: {(end - begin) * 1000:.0f} ms')
-        logger.info(f'verification result: {verification_result}')
+        logger.info(f"verifier time: {(end - begin) * 1000:.0f} ms")
+        logger.info(f"verification result: {verification_result}")
     except Exception as exception:
-        logger.error(f'coefficients of the polynomial which caused an error (in ascending order): {g.coefficients(order='asc')}')
-        logger.exception(f'error message: {exception}')
+        logger.error(
+            f"coefficients of the polynomial which caused an error (in ascending order): {g.coefficients(order='asc')}"
+        )
+        logger.exception(f"error message: {exception}")
         raise
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

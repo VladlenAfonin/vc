@@ -1,12 +1,12 @@
 """Merkle tree implementation."""
 
-
 import dataclasses
 import logging
 import pickle
 import typing
 
 import galois
+import galois.typing
 import numpy
 import pymerkle
 
@@ -25,10 +25,7 @@ class MerkleTree:
     _tree: pymerkle.BaseMerkleTree
     """Internal pymerkle Merkle tree."""
 
-    def __init__(
-            self,
-            algorithm: str = MEKRLE_HASH_ALGORITHM
-            ) -> None:
+    def __init__(self, algorithm: str = MEKRLE_HASH_ALGORITHM) -> None:
         """Initialize a new Merkle tree with a given hashing algorithm.
 
         :param algorithm: Hashing algorithm, defaults to MEKRLE_HASH_ALGORITHM.
@@ -37,10 +34,7 @@ class MerkleTree:
 
         self._tree = pymerkle.InmemoryTree(algorithm=algorithm)
 
-    def append(
-            self,
-            field_elements: galois.FieldArray
-            ) -> None:
+    def append(self, field_elements: galois.FieldArray) -> None:
         """Append a single stacked evaluation to the Merkle tree.
 
         :param field_elements: Single stacked evaluation.
@@ -52,10 +46,7 @@ class MerkleTree:
         # Ignore the returned index as we don't need it.
         _ = self._tree.append_entry(field_elements_bytes)
 
-    def append_bulk(
-            self,
-            stack: galois.FieldArray
-            ) -> None:
+    def append_bulk(self, stack: galois.FieldArray) -> None:
         """Append multiple stacked evaluations to the Merkle tree.
 
         :param stack: Multiple stacked evaluations.
@@ -67,10 +58,8 @@ class MerkleTree:
 
     @staticmethod
     def verify(
-            field_elements: galois.FieldArray,
-            root: bytes,
-            proof: pymerkle.MerkleProof
-            ) -> bool:
+        field_elements: galois.FieldArray, root: bytes, proof: pymerkle.MerkleProof
+    ) -> bool:
         """Verify that a given single stacked evaluation is included in the Merkle tree.
 
         :param field_elements: Stacked evaluation.
@@ -96,10 +85,10 @@ class MerkleTree:
 
     @staticmethod
     def verify_bulk(
-            stacked_evaluations: galois.FieldArray,
-            root: bytes,
-            proofs: typing.List[pymerkle.MerkleProof]
-            ) -> bool:
+        stacked_evaluations: galois.FieldArray,
+        root: bytes,
+        proofs: typing.List[pymerkle.MerkleProof],
+    ) -> bool:
         """Verify multiple evaluations given a Merkle tree root and corresponding proofs.
 
         :param stacked_evaluations: Stacked evaluations.
@@ -114,11 +103,12 @@ class MerkleTree:
 
         return all(
             MerkleTree.verify(field_elements, root, proof)
-            for field_elements, proof in zip(stacked_evaluations, proofs))
+            for field_elements, proof in zip(stacked_evaluations, proofs)
+        )
 
     def get_root(self) -> bytes:
         """Get current Merkle tree root.
-        
+
         :return: Current Merkle tree root.
         :rtype: bytes
         """
@@ -126,10 +116,7 @@ class MerkleTree:
         result = self._tree.get_state()
         return result
 
-    def prove(
-            self,
-            index: int
-            ) -> pymerkle.MerkleProof:
+    def prove(self, index: int) -> pymerkle.MerkleProof:
         """Generate a Merkle proof for given index.
 
         :param index: Index to generate the proof for.
@@ -143,10 +130,7 @@ class MerkleTree:
 
         return proof
 
-    def prove_bulk(
-            self,
-            indices: numpy.ndarray[int]
-            ) -> typing.List[pymerkle.MerkleProof]:
+    def prove_bulk(self, indices: numpy.ndarray) -> typing.List[pymerkle.MerkleProof]:
         """Generate a list of Merkle proofs for given indices.
 
         :param indices: Indices to generate the proofs for.

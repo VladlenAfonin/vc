@@ -25,6 +25,7 @@ class FriProver:
     @dataclasses.dataclass(init=False, slots=True)
     class State:
         """Current prover state."""
+
         evaluation_domain: galois.Array
         """Current evaluation domain."""
         omega: galois.Array
@@ -44,7 +45,9 @@ class FriProver:
 
         def __init__(self, f: galois.Poly, options: FriParameters) -> None:
             coefficients_length = f.degree + 1
-            assert is_pow2(coefficients_length), 'number of coefficients in polynomial must be a power of two'
+            assert is_pow2(
+                coefficients_length
+            ), "number of coefficients in polynomial must be a power of two"
 
             self.polynomial = f
             field = f.field
@@ -68,7 +71,7 @@ class FriProver:
         :param options: Public prover options.
         """
 
-        assert options is not None, 'options cannot be None'
+        assert options is not None, "options cannot be None"
 
         self._parameters = options
         self._state = None
@@ -81,10 +84,12 @@ class FriProver:
 
         self._state = FriProver.State(f, self._parameters)
 
-        initial_round_evaluations = self._state.polynomial(self._state.evaluation_domain)
+        initial_round_evaluations = self._state.polynomial(
+            self._state.evaluation_domain
+        )
         stacked_evaluations = stack(
-            initial_round_evaluations,
-            self._parameters.folding_factor)
+            initial_round_evaluations, self._parameters.folding_factor
+        )
         self._state.evaluations.append(stacked_evaluations)
 
         merkle_tree = MerkleTree()
@@ -100,12 +105,13 @@ class FriProver:
 
         round_proofs: typing.List[RoundProof] = []
 
-        query_indices_range = \
-            self._parameters.initial_evaluation_domain_length // \
-            self._parameters.folding_factor
+        query_indices_range = (
+            self._parameters.initial_evaluation_domain_length
+            // self._parameters.folding_factor
+        )
         query_indices = self._state.sponge.squeeze_indices(
-            self._parameters.number_of_repetitions,
-            query_indices_range)
+            self._parameters.number_of_repetitions, query_indices_range
+        )
         query_evaluations = self._state.evaluations[0][query_indices]
 
         merkle_proofs = self._state.merkle_trees[0].prove_bulk(query_indices)
@@ -122,9 +128,8 @@ class FriProver:
         # The final polynomial does not need any proofs.
         final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = fold_polynomial(
-            self._state.polynomial,
-            final_randomness,
-            self._parameters.folding_factor)
+            self._state.polynomial, final_randomness, self._parameters.folding_factor
+        )
 
         result = FriProof(round_proofs, self._state.merkle_roots, final_polynomial)
 
@@ -133,17 +138,16 @@ class FriProver:
     def _round(self) -> None:
         verifier_randomness = self._state.sponge.squeeze_field_element()
         new_polynomial = fold_polynomial(
-            self._state.polynomial,
-            verifier_randomness,
-            self._parameters.folding_factor)
+            self._state.polynomial, verifier_randomness, self._parameters.folding_factor
+        )
         new_evaluation_domain = fold_domain(
-            self._state.evaluation_domain,
-            self._parameters.folding_factor)
+            self._state.evaluation_domain, self._parameters.folding_factor
+        )
 
         new_round_evaluations = new_polynomial(new_evaluation_domain)
         stacked_evaluations = stack(
-            new_round_evaluations,
-            self._parameters.folding_factor)
+            new_round_evaluations, self._parameters.folding_factor
+        )
         self._state.evaluations.append(stacked_evaluations)
 
         merkle_tree = MerkleTree()
