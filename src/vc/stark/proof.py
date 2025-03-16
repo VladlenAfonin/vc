@@ -2,5 +2,4 @@ import dataclasses
 
 
 @dataclasses.dataclass(slots=True)
-class StarkProof:
-    pass
+class StarkProof: ...
