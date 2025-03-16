@@ -4,18 +4,19 @@ This is an academic prototype which is not intended for production use, as it di
 
 # About
 
-This repository contains tool for verifiable computations. It is mainly focused on researching STARKs, its components and constructions based on STARKs.
+This repository contains tools for verifiable computations. It is mainly focused on researching STARKs, its components and constructions based on STARKs.
 
 # Table of contents
 
-- [Disclaimer](#disclaimer)
-- [About](#about)
-- [Table of contents](#table-of-contents)
+<!-- mtoc start -->
+
 - [Setup](#setup)
-  - [Linux/macOS](#linuxmacos)
-  - [Windows](#windows)
+    - [Linux/macOS](#linuxmacos)
+    - [Windows](#windows)
 - [Usage](#usage)
-  - [Example](#example)
+    - [Example](#example)
+
+<!-- mtoc end -->
 
 # Setup
 
