@@ -12,7 +12,7 @@ def fold_sort_generate(
     query_indices: typing.List[int],
     query_indices_range: int,
     unordered_folded_values: galois.Array,
-) -> typing.Tuple[int, int, galois.Array]:
+):
     """This function folds indices, generates check indices used for
     consistency check in the next round of the FRI protocol and orders
     these query indices, check indices and evaluations corresponding
@@ -54,9 +54,9 @@ def fold_sort_generate(
 
 
 def fold_indices(
-    indices: numpy.ndarray[int],
+    indices: numpy.ndarray,
     indices_range: int,
-) -> numpy.ndarray[int]:
+) -> numpy.ndarray:
     """Fold indices preserving sorted state.
 
     :param indices: Indices to fold.
@@ -131,7 +131,10 @@ def fold_polynomial(
     return galois.Poly(folded_coefficients, order="asc", field=g.field)
 
 
-def fold_domain(domain: galois.Array, folding_factor: int) -> galois.Array:
+def fold_domain(
+    domain: galois.FieldArray,
+    folding_factor: int,
+) -> numpy.ndarray:
     """Fold domain.
 
     :param domain: Evaluation domain to fold.
@@ -151,7 +154,10 @@ def fold_domain(domain: galois.Array, folding_factor: int) -> galois.Array:
     return new_domain
 
 
-def stack(evaluations: galois.Array, folding_factor: int) -> galois.Array:
+def stack(
+    evaluations: galois.FieldArray,
+    folding_factor: int,
+) -> numpy.ndarray:
     """Stack evaluations.
 
     :param evaluations: Polynomial evaluations over some evaluation domain.

@@ -7,7 +7,6 @@ import pickle
 import typing
 
 import galois
-from galois.typing import ArrayLike
 import numpy
 
 from vc.constants import LOGGER_MATH
@@ -21,7 +20,7 @@ BYTE_SIZE_BITS = 8
 class Sponge:
     """Sponge."""
 
-    _field: ArrayLike
+    _field: type[galois.FieldArray]
     """Field for elements sampling."""
     _objects: typing.List[object]
     """Current objects array."""
@@ -30,7 +29,7 @@ class Sponge:
     _additional_state: int
     """Additional Sponge state. This is used so that consecutive squeezes produce different results."""
 
-    def __init__(self, field: ArrayLike) -> None:
+    def __init__(self, field: type[galois.FieldArray]) -> None:
         """Initialize new Sponge.
 
         :param field: Field to use when sampling field elements.
@@ -93,7 +92,10 @@ class Sponge:
         return self._squeeze_number(upper_bound, n)
 
     def squeeze_indices(
-        self, amount: int, upper_bound: int, n: int = 32
+        self,
+        amount: int,
+        upper_bound: int,
+        n: int = 32,
     ) -> numpy.ndarray:
         """Sample an array of distinct random numbers up to upper bound.
 
@@ -125,7 +127,7 @@ class Sponge:
 
         return numpy.sort(numpy.array(result))
 
-    def _squeeze_field_element(self, n: int) -> galois.Array:
+    def _squeeze_field_element(self, n: int) -> galois.FieldArray:
         """Squeeze a field element.
 
         :param n: Number of bytes to use when squeezing.

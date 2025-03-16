@@ -18,7 +18,10 @@ hash_buff = pymerkle.InmemoryTree(MEKRLE_HASH_ALGORITHM).hash_buff
 
 
 # TODO: Rewrite to custom implementation deriving from the pymerkle.BaseMerkleTree.
-@dataclasses.dataclass(init=False, slots=True)
+@dataclasses.dataclass(
+    init=False,
+    slots=True,
+)
 class MerkleTree:
     """Merkle tree for field stacked evaluations."""
 
@@ -34,7 +37,10 @@ class MerkleTree:
 
         self._tree = pymerkle.InmemoryTree(algorithm=algorithm)
 
-    def append(self, field_elements: galois.FieldArray) -> None:
+    def append(
+        self,
+        field_elements: galois.FieldArray,
+    ) -> None:
         """Append a single stacked evaluation to the Merkle tree.
 
         :param field_elements: Single stacked evaluation.
@@ -46,7 +52,10 @@ class MerkleTree:
         # Ignore the returned index as we don't need it.
         _ = self._tree.append_entry(field_elements_bytes)
 
-    def append_bulk(self, stack: galois.FieldArray) -> None:
+    def append_bulk(
+        self,
+        stack: galois.FieldArray,
+    ) -> None:
         """Append multiple stacked evaluations to the Merkle tree.
 
         :param stack: Multiple stacked evaluations.
@@ -58,7 +67,9 @@ class MerkleTree:
 
     @staticmethod
     def verify(
-        field_elements: galois.FieldArray, root: bytes, proof: pymerkle.MerkleProof
+        field_elements: galois.FieldArray,
+        root: bytes,
+        proof: pymerkle.MerkleProof,
     ) -> bool:
         """Verify that a given single stacked evaluation is included in the Merkle tree.
 
@@ -116,7 +127,10 @@ class MerkleTree:
         result = self._tree.get_state()
         return result
 
-    def prove(self, index: int) -> pymerkle.MerkleProof:
+    def prove(
+        self,
+        index: int,
+    ) -> pymerkle.MerkleProof:
         """Generate a Merkle proof for given index.
 
         :param index: Index to generate the proof for.
@@ -130,7 +144,10 @@ class MerkleTree:
 
         return proof
 
-    def prove_bulk(self, indices: numpy.ndarray) -> typing.List[pymerkle.MerkleProof]:
+    def prove_bulk(
+        self,
+        indices: numpy.ndarray,
+    ) -> typing.List[pymerkle.MerkleProof]:
         """Generate a list of Merkle proofs for given indices.
 
         :param indices: Indices to generate the proofs for.

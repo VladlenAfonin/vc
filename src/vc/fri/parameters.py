@@ -33,7 +33,7 @@ class FriParameters:
     """Number of coefficients in final polynomial."""
     initial_evaluation_domain_length: int
     """Length of the initial evaluation domain."""
-    initial_evaluation_domain: galois.Array
+    initial_evaluation_domain: galois.FieldArray
     """Initial evaluation domain."""
     security_level_bits: int
     """Security level in bits."""
@@ -41,11 +41,11 @@ class FriParameters:
     """Number of Verifier checks."""
     number_of_rounds: int
     """Number of FRI rounds."""
-    field: galois.FieldArray
+    field: type[galois.FieldArray]
     """Field."""
-    omega: galois.Array
+    omega: galois.FieldArray
     """Root of unity for initial domain generation."""
-    offset: galois.Array
+    offset: galois.FieldArray
     """Multiplicative group generator."""
 
     def __repr__(self) -> str:
@@ -68,7 +68,7 @@ class FriParameters:
         security_level_bits: int,
         initial_coefficients_length_log: int,
         final_coefficients_length_log: int,
-        field: galois.FieldArray,
+        field: type[galois.FieldArray],
     ) -> None:
         assert folding_factor_log > 0, "folding factor log must be at least 1"
         assert expansion_factor_log > 0, "expansion factor log must be at least 1"

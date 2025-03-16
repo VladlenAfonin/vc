@@ -12,9 +12,9 @@ from vc.constants import FIELD_GOLDILOCKS
 field = FIELD_GOLDILOCKS
 
 
-def get_air(
+def get_aet(
     n: int,
-) -> numpy.typing.ArrayLike:
+) -> numpy.ndarray:
     """Get AIR for Fibonacci numbers.
 
     :param n: Index of the Fibonacci number to build AIR for.
@@ -38,7 +38,7 @@ def get_air(
 def get_bound_constraints(
     n: int,
     result: int,
-) -> numpy.typing.ArrayLike:
+) -> numpy.ndarray:
     """Get bound constraints."""
 
     assert n > 0, "unable to create bound constrainst for n < 1"

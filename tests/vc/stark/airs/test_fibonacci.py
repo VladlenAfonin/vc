@@ -2,7 +2,7 @@ import pytest
 import numpy
 import numpy.typing
 
-from vc.stark.airs.fibonacci import fib, get_air, field, get_bound_constraints
+from vc.stark.airs.fibonacci import fib, get_aet, field, get_bound_constraints
 
 
 @pytest.mark.parametrize(
@@ -52,7 +52,7 @@ def test_get_air(
     n: int,
     expected: numpy.typing.ArrayLike,
 ) -> None:
-    result = get_air(n)
+    result = get_aet(n)
     assert numpy.all(result == expected)
 
 

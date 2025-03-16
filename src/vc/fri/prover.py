@@ -26,11 +26,11 @@ class FriProver:
     class State:
         """Current prover state."""
 
-        evaluation_domain: galois.Array
+        evaluation_domain: galois.FieldArray
         """Current evaluation domain."""
-        omega: galois.Array
+        omega: galois.FieldArray
         """Current domain generator. This is a root of unity."""
-        offset: galois.Array
+        offset: galois.FieldArray
         """Domain offset. This is typically F* generator."""
         polynomial: galois.Poly
         """Current polynomial."""
@@ -38,7 +38,7 @@ class FriProver:
         """Proof stream to be filled."""
         merkle_trees: typing.List[MerkleTree]
         """Merkle trees for all rounds."""
-        evaluations: typing.List[galois.Array]
+        evaluations: typing.List[galois.FieldArray]
         """Evaluations of the current polynomial over current domain."""
         merkle_roots: typing.List[bytes]
         """Merkle root of current evaluations."""
@@ -88,7 +88,8 @@ class FriProver:
             self._state.evaluation_domain
         )
         stacked_evaluations = stack(
-            initial_round_evaluations, self._parameters.folding_factor
+            initial_round_evaluations,
+            self._parameters.folding_factor,
         )
         self._state.evaluations.append(stacked_evaluations)
 
@@ -110,7 +111,8 @@ class FriProver:
             // self._parameters.folding_factor
         )
         query_indices = self._state.sponge.squeeze_indices(
-            self._parameters.number_of_repetitions, query_indices_range
+            self._parameters.number_of_repetitions,
+            query_indices_range,
         )
         query_evaluations = self._state.evaluations[0][query_indices]
 
@@ -128,7 +130,9 @@ class FriProver:
         # The final polynomial does not need any proofs.
         final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = fold_polynomial(
-            self._state.polynomial, final_randomness, self._parameters.folding_factor
+            self._state.polynomial,
+            final_randomness,
+            self._parameters.folding_factor,
         )
 
         result = FriProof(round_proofs, self._state.merkle_roots, final_polynomial)
@@ -138,15 +142,19 @@ class FriProver:
     def _round(self) -> None:
         verifier_randomness = self._state.sponge.squeeze_field_element()
         new_polynomial = fold_polynomial(
-            self._state.polynomial, verifier_randomness, self._parameters.folding_factor
+            self._state.polynomial,
+            verifier_randomness,
+            self._parameters.folding_factor,
         )
         new_evaluation_domain = fold_domain(
-            self._state.evaluation_domain, self._parameters.folding_factor
+            self._state.evaluation_domain,
+            self._parameters.folding_factor,
         )
 
         new_round_evaluations = new_polynomial(new_evaluation_domain)
         stacked_evaluations = stack(
-            new_round_evaluations, self._parameters.folding_factor
+            new_round_evaluations,
+            self._parameters.folding_factor,
         )
         self._state.evaluations.append(stacked_evaluations)
 

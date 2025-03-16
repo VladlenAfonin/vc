@@ -6,6 +6,7 @@ import pickle
 import typing
 
 import galois
+import numpy
 import pymerkle
 
 from vc.constants import LOGGER_FRI
@@ -16,7 +17,7 @@ logger = logging.getLogger(LOGGER_FRI)
 
 @dataclasses.dataclass(slots=True)
 class RoundProof:
-    stacked_evaluations: galois.Array
+    stacked_evaluations: galois.FieldArray | galois.Array | numpy.ndarray
     proofs: typing.List[pymerkle.MerkleProof]
 
 
