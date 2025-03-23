@@ -52,10 +52,18 @@ class MPoly:
     terms: typing.Dict[typing.Tuple[int, ...], galois.FieldArray]
     field: type[galois.FieldArray]
 
-    def __init__(self, terms, field: type[galois.FieldArray]):
+    def __init__(
+        self,
+        terms: typing.Dict[typing.Tuple[int, ...], galois.FieldArray],
+        field: type[galois.FieldArray],
+    ) -> None:
         """
         Initializes a multivariate polynomial.
+
         :param terms: Dictionary mapping monomials (tuples of exponents) to coefficients.
+        :type terms: typing.Dict[typing.Tuple[int, ...], galois.FieldArray]
+        :param field: Dictionary mapping monomials (tuples of exponents) to coefficients.
+        :type field: type[galois.FieldArray]
         """
 
         self.terms = {k: v for k, v in terms.items() if v != 0}  # Remove zero terms
@@ -67,10 +75,14 @@ class MPoly:
     def eval(self, point: galois.FieldArray) -> galois.FieldArray:
         """
         Evaluates the polynomial at a given point.
+
         :param point: List or tuple of values corresponding to variables.
+        :type polys: galois.FieldArray
+        :return: Evaluation of the given multivariate polynomial.
+        :rtype: galois.FieldArray
         """
 
-        assert len(point) == len(
+        assert point.size == len(
             next(iter(self.terms.keys()), ())
         ), "Dimension mismatch"
 
@@ -86,17 +98,20 @@ class MPoly:
     def evals(self, polys: typing.List[galois.Poly]) -> galois.Poly:
         """
         Symbolically evaluates the polynomial by substituting univariate polynomials in place of variables.
+
         :param polys: List of `galois.Poly` objects corresponding to variables.
+        :type polys: typing.List[galois.Poly]
+        :return: Symbolic evaluation of the given multivariate polynomial.
+        :rtype: galois.Poly
         """
 
         assert len(polys) == len(
             next(iter(self.terms.keys()), ())
         ), "Dimension mismatch"
 
-        field = polys[0].field
-        result_poly = galois.Poly.Zero(field)
+        result_poly = galois.Poly.Zero(self.field)
         for exp, coeff in self.terms.items():
-            term_poly = galois.Poly([coeff], field)
+            term_poly = galois.Poly([coeff], self.field)
             for poly, e in zip(polys, exp):
                 term_poly *= poly**e
             result_poly += term_poly
