@@ -4,7 +4,7 @@ import pytest
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
 from vc.fri.prover import FriProver
-from vc.stark.airs.fibonacci import get_aet
+from vc.stark.airs.fibonacci import fib, get_aet
 from vc.stark.parameters import StarkParameters
 from vc.stark.prover import StarkProver
 from vc.constants import FIELD_GOLDILOCKS
@@ -20,8 +20,8 @@ def get_test_stark_prover(n: int) -> StarkProver:
     aet_height = get_nearest_power_of_two(n)
     aet_height_log = math.ceil(math.log2(aet_height))
 
-    omega_domain_len_log = aet_height + expansion_factor_log
-    omega = TEST_FIELD.primitive_root_of_unity(1 << omega_domain_len_log)
+    omega_domain_len = aet_height * expansion_factor
+    omega = TEST_FIELD.primitive_root_of_unity(omega_domain_len)
     omicron = omega**expansion_factor
 
     stark_parameters = StarkParameters(omega, omicron)
@@ -47,15 +47,22 @@ def get_test_stark_prover(n: int) -> StarkProver:
     )
 
 
-def test_get_trace_polynomials():
-    stark_prover = get_test_stark_prover(4)
-    aet = get_aet(4)
+@pytest.mark.parametrize("n", [4, 8, 16])
+def test_get_trace_polynomials(n: int):
+    stark_prover = get_test_stark_prover(n)
+    aet = get_aet(n)
+    print(f"{stark_prover.state.omicron_domain.shape = }")
+
     trace_polynomials = stark_prover.get_trace_polynomials(aet)
 
     # Test first row of the AET.
-    assert trace_polynomials[0](TEST_FIELD(1)) == 0
-    assert trace_polynomials[1](TEST_FIELD(1)) == 1
+    assert trace_polynomials[0](TEST_FIELD(1)) == 0, "invalid first row"
+    assert trace_polynomials[1](TEST_FIELD(1)) == 1, "invalid first row"
 
     # Test last row of the AET.
-    assert trace_polynomials[0](stark_prover.stark_parameters.omicron**3) == 2
-    assert trace_polynomials[1](stark_prover.stark_parameters.omicron**3) == 3
+    assert trace_polynomials[0](
+        stark_prover.stark_parameters.omicron ** (n - 1)
+    ) == fib(n - 1), "invalid last row"
+    assert trace_polynomials[1](
+        stark_prover.stark_parameters.omicron ** (n - 1)
+    ) == fib(n), "invalid first row"

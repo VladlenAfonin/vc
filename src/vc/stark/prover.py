@@ -45,4 +45,5 @@ class StarkProver:
     # ) -> StarkProof: ...
 
     def get_trace_polynomials(self, aet: galois.FieldArray) -> typing.List[galois.Poly]:
+        # TODO: This does not yet support "not power of two" AET heights.
         return [galois.lagrange_poly(self.state.omicron_domain, col) for col in aet.T]
