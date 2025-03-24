@@ -6,7 +6,7 @@ from vc.stark.airs.fibonacci import (
     fib,
     get_aet,
     field,
-    get_bound_constraints,
+    get_boundary_constraints,
     get_transition_constraints,
 )
 
@@ -112,15 +112,16 @@ def test_bound_constraints(
     fn: int,
     expected: numpy.typing.ArrayLike,
 ) -> None:
-    result = get_bound_constraints(n, fn)
+    result = get_boundary_constraints(n, fn)
     assert numpy.all(result == expected)
 
 
-@pytest.mark.parametrize("n", [1, 2, 3, 4, 5, 6, 7, 8, 16, 20, 30, 40])
+@pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7, 8, 16, 20, 30, 40])
 def test_get_transition_constraints(n: int):
+    zero = field(0)
     transition_constraints = get_transition_constraints()
     aet = get_aet(n)
     for i in range(n - 1):
         for constraint in transition_constraints:
             result = constraint.eval(field([*aet[i], *aet[i + 1]]))
-            assert result == field(0)
+            assert result == zero

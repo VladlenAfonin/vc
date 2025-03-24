@@ -65,15 +65,15 @@ class FriProver:
     _state: FriProver.State | None
     """Internal Prover state."""
 
-    def __init__(self, options: FriParameters) -> None:
+    def __init__(self, parameters: FriParameters) -> None:
         """Initialize new Prover.
 
         :param options: Public prover options.
         """
 
-        assert options is not None, "options cannot be None"
+        assert parameters is not None, "options cannot be None"
 
-        self._parameters = options
+        self._parameters = parameters
         self._state = None
 
     def prove(self, f: galois.Poly) -> FriProof:

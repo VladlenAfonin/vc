@@ -5,6 +5,7 @@ Fibonacci sequence = {0, 1, 1, ...}, indexation is from 0.
 import typing
 import numpy
 import numpy.typing
+import galois
 
 from vc.constants import FIELD_GOLDILOCKS
 from vc.polynomial import MPoly
@@ -36,8 +37,8 @@ def get_transition_constraints() -> typing.List[MPoly]:
 
 def get_aet(
     n: int,
-) -> numpy.ndarray:
-    """Get AIR for Fibonacci numbers.
+) -> galois.FieldArray:
+    """Get algebraic execution trace (AET) for Fibonacci numbers.
 
     :param n: Index of the Fibonacci number to build AIR for.
     :type n: int
@@ -57,13 +58,13 @@ def get_aet(
     return field(aet)
 
 
-def get_bound_constraints(
+def get_boundary_constraints(
     n: int,
     result: int,
-) -> numpy.ndarray:
-    """Get bound constraints."""
+) -> galois.FieldArray:
+    """Get boundary constraints."""
 
-    assert n > 0, "unable to create bound constrainst for n < 1"
+    assert n > 0, "unable to create boundary constrainst for n < 1"
 
     bc = field(
         [
