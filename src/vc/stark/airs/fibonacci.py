@@ -2,14 +2,36 @@
 Fibonacci sequence = {0, 1, 1, ...}, indexation is from 0.
 """
 
+import typing
 import numpy
 import numpy.typing
 
 from vc.constants import FIELD_GOLDILOCKS
+from vc.polynomial import MPoly
 
 
 # TODO: Refactor into some state or options.
 field = FIELD_GOLDILOCKS
+
+
+def get_transition_constraints() -> typing.List[MPoly]:
+    return [
+        MPoly(
+            {  # y1 - x2
+                (0, 0, 1, 0): FIELD_GOLDILOCKS(1),
+                (0, 1, 0, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
+            },
+            FIELD_GOLDILOCKS,
+        ),
+        MPoly(
+            {  # y2 - x1 - x2
+                (0, 0, 0, 1): FIELD_GOLDILOCKS(1),
+                (1, 0, 0, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
+                (0, 1, 0, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
+            },
+            FIELD_GOLDILOCKS,
+        ),
+    ]
 
 
 def get_aet(
