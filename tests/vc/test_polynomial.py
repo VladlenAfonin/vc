@@ -3,10 +3,35 @@ import galois
 import pytest
 
 from vc.constants import FIELD_193
-from vc.polynomial import MPoly
+from vc.polynomial import MPoly, scale
 
 
 TEST_FIELD = FIELD_193
+
+
+@pytest.mark.parametrize(
+    "g, a, expected",
+    [
+        (
+            galois.Poly([1, 2, 3], order="asc", field=TEST_FIELD),
+            1,
+            galois.Poly([1, 2, 3], order="asc", field=TEST_FIELD),
+        ),
+        (
+            galois.Poly([1, 2, 3], order="asc", field=TEST_FIELD),
+            2,
+            galois.Poly([1, 2 * 2, 3 * (2**2)], order="asc", field=TEST_FIELD),
+        ),
+        (
+            galois.Poly([1, 2, 3], order="asc", field=TEST_FIELD),
+            2,
+            galois.Poly([1, 2 * 3, 3 * (3**2)], order="asc", field=TEST_FIELD),
+        ),
+    ],
+)
+def test_scale(g: galois.Poly, a: int, expected: galois.Poly) -> None:
+    result = scale(g, a)
+    assert expected == result
 
 
 @pytest.mark.parametrize(

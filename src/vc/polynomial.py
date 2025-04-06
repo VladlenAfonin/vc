@@ -47,6 +47,21 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     return g * random_polynomial
 
 
+def scale(g: galois.Poly, a: int) -> galois.Poly:
+    """Scale polynomial by a number. This transforms g(x) to g(a*x).
+
+    :param g: Polynomial to be scaled.
+    :type g: galois.Poly
+    :param a: Scaling factor.
+    :type a: int
+    :return: Scaled polynomial.
+    :rtype: galois.Poly
+    """
+
+    new_coefficients = [c * (a**i) for i, c in enumerate(g.coefficients(order="asc"))]
+    return galois.Poly(new_coefficients, order="asc", field=g.field)
+
+
 @dataclasses.dataclass(slots=True, init=False)
 class MPoly:
     terms: typing.Dict[typing.Tuple[int, ...], galois.FieldArray]
