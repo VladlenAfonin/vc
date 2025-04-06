@@ -24,7 +24,7 @@ TEST_FIELD = FIELD_193
         ),
         (
             galois.Poly([1, 2, 3], order="asc", field=TEST_FIELD),
-            2,
+            3,
             galois.Poly([1, 2 * 3, 3 * (3**2)], order="asc", field=TEST_FIELD),
         ),
     ],
