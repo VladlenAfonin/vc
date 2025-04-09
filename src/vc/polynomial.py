@@ -7,6 +7,7 @@ import logging
 import numpy
 import galois
 
+from vc.base import get_nearest_power_of_two, is_pow2
 from vc.constants import LOGGER_MATH
 
 
@@ -45,6 +46,26 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
         [randomness**power for power in range(n + 1)], field=g.field
     )
     return g * random_polynomial
+
+
+def expand_to_nearest_power_of_two(
+    g: galois.Poly,
+    a: int | None,
+    b: int | None,
+) -> galois.Poly:
+    n_coeffs = g.degree + 1
+    if is_pow2(n_coeffs):
+        return g
+
+    assert a is not None, "a cannot be None when n_coeffs != pow2"
+    assert b is not None, "b cannot be None when n_coeffs != pow2"
+
+    nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
+    factor = galois.Poly([0, 1], order="asc", field=g.field) ** (
+        nearest_power_of_two - n_coeffs
+    )
+
+    return a * g + b * g * factor
 
 
 def scale(g: galois.Poly, a: int) -> galois.Poly:

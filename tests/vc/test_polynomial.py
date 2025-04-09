@@ -3,7 +3,7 @@ import galois
 import pytest
 
 from vc.constants import FIELD_193
-from vc.polynomial import MPoly, scale
+from vc.polynomial import MPoly, expand_to_nearest_power_of_two, scale
 
 
 TEST_FIELD = FIELD_193
@@ -31,6 +31,49 @@ TEST_FIELD = FIELD_193
 )
 def test_scale(g: galois.Poly, a: int, expected: galois.Poly) -> None:
     result = scale(g, a)
+    assert expected == result
+
+
+@pytest.mark.parametrize(
+    "g, a, b, expected",
+    [
+        (
+            galois.Poly([1], field=TEST_FIELD, order="asc"),  # 1
+            0,
+            1,
+            galois.Poly([1], field=TEST_FIELD, order="asc"),  # 1
+        ),
+        (
+            galois.Poly([0, 0, 1], field=TEST_FIELD, order="asc"),  # x^2
+            0,
+            1,
+            galois.Poly([0, 0, 0, 1], field=TEST_FIELD, order="asc"),  # x^3
+        ),
+        (
+            galois.Poly([0, 0, 1], field=TEST_FIELD, order="asc"),  # x^2
+            2,
+            1,
+            galois.Poly([0, 0, 2, 1], field=TEST_FIELD, order="asc"),  # x^3 + 2x^2
+        ),
+        (
+            galois.Poly([0, 0, 0, 0, 1], field=TEST_FIELD, order="asc"),  # x^4
+            3,
+            2,
+            galois.Poly(
+                [0, 0, 0, 0, 3, 0, 0, 2],
+                field=TEST_FIELD,
+                order="asc",
+            ),  # 2x^7 + 3x^4
+        ),
+    ],
+)
+def test_expand_to_nearest_power_of_two(
+    g: galois.Poly,
+    a: int | None,
+    b: int | None,
+    expected: galois.Poly,
+) -> None:
+    result = expand_to_nearest_power_of_two(g, a, b)
     assert expected == result
 
 
