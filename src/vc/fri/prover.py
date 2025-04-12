@@ -9,6 +9,8 @@ import galois
 from vc.base import is_pow2
 from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
 from vc.fri.proof import FriProof, RoundProof
+from vc.logging import current_value, logging_mark
+from vc.polynomial import expand_to_nearest_power_of_two2_ext
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
@@ -49,7 +51,7 @@ class FriProver:
             ), "number of coefficients in polynomial must be a power of two"
 
             self.polynomial = f
-            field = f.field
+            field: type[galois.FieldArray] = f.field
 
             self.omega = options.omega
             self.offset = options.offset
@@ -75,6 +77,7 @@ class FriProver:
         self._parameters = parameters
         self._state = None
 
+    @logging_mark(logger)
     def prove(self, f: galois.Poly) -> FriProof:
         """Prover that polynomial f is close to RS-code.
 
@@ -83,7 +86,7 @@ class FriProver:
 
         self._state = FriProver.State(f, self._parameters)
 
-        initial_round_evaluations = self._state.polynomial(
+        initial_round_evaluations: galois.FieldArray = self._state.polynomial(
             self._state.evaluation_domain
         )
         stacked_evaluations = stack(
@@ -92,6 +95,7 @@ class FriProver:
         )
         self._state.evaluations.append(stacked_evaluations)
 
+        # This is an initial commitment basically.
         merkle_tree = MerkleTree()
         merkle_tree.append_bulk(stacked_evaluations)
         merkle_root = merkle_tree.get_root()
@@ -100,10 +104,25 @@ class FriProver:
         self._state.merkle_roots.append(merkle_root)
         self._state.merkle_trees.append(merkle_tree)
 
+        # Transform f to g that has pow2 coefficients.
+        r = self._state.sponge.squeeze_field_element()
+        logger.debug(current_value("r", r))
+
+        g, degree_correction_polynomial = expand_to_nearest_power_of_two2_ext(f, r)
+        logger.debug(current_value("degree corrected polynomial", g))
+        logger.debug(
+            current_value(
+                "degree correction polynomial",
+                degree_correction_polynomial,
+            )
+        )
+
+        self._state.polynomial = g
+
         for i in range(self._parameters.number_of_rounds):
             self._round()
 
-        # This is moved here so that verifier and prover both access the Sponge in the same order.
+        # This is moved here so that Verifier and Prover both access the Sponge in the same order.
         final_randomness = self._state.sponge.squeeze_field_element()
 
         round_proofs: typing.List[RoundProof] = []
@@ -136,11 +155,20 @@ class FriProver:
             self._parameters.folding_factor,
         )
 
-        result = FriProof(round_proofs, self._state.merkle_roots, final_polynomial)
+        result = FriProof(
+            round_proofs,
+            self._state.merkle_roots,
+            final_polynomial,
+            degree_correction_polynomial,
+        )
 
         return result
 
     def _round(self) -> None:
+        assert (
+            self._state is not None
+        ), "self._state must be initialized when calling self._round"
+
         verifier_randomness = self._state.sponge.squeeze_field_element()
         new_polynomial = fold_polynomial(
             self._state.polynomial,
@@ -152,7 +180,7 @@ class FriProver:
             self._parameters.folding_factor,
         )
 
-        new_round_evaluations = new_polynomial(new_evaluation_domain)
+        new_round_evaluations: galois.FieldArray = new_polynomial(new_evaluation_domain)
         stacked_evaluations = stack(
             new_round_evaluations,
             self._parameters.folding_factor,

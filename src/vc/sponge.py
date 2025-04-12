@@ -44,7 +44,11 @@ class Sponge:
     def _serialize(self) -> bytes:
         """Serialize current state into byte array."""
 
-        return pickle.dumps(self._objects)
+        logger.debug(function_begin(self._serialize.__name__))
+        result = pickle.dumps(self._objects)
+        logger.debug(function_end(self._serialize.__name__))
+
+        return result
 
     def absorb(self, obj: typing.Any) -> None:
         """Push data to the proof stream.
@@ -73,7 +77,10 @@ class Sponge:
         """
 
         logger.debug(function_begin(self.squeeze.__name__))
+        logger.debug(parameter_received("n", n))
+
         result = self._squeeze(n)
+
         logger.debug(function_end(self.squeeze.__name__, result))
 
         return result
@@ -88,7 +95,10 @@ class Sponge:
         """
 
         logger.debug(function_begin(self.squeeze_field_element.__name__))
+        logger.debug(parameter_received("n", n))
+
         result = self._squeeze_field_element(n)
+
         logger.debug(function_end(self.squeeze_field_element.__name__, result))
 
         return result
@@ -105,7 +115,10 @@ class Sponge:
         """
 
         logger.debug(function_begin(self.squeeze_index.__name__))
+        logger.debug(parameter_received("n", n))
+
         result = self._squeeze_number(upper_bound, n)
+
         logger.debug(function_end(self.squeeze_index.__name__, result))
 
         return result
@@ -129,6 +142,9 @@ class Sponge:
         """
 
         logger.debug(function_begin(self.squeeze_indices.__name__))
+        logger.debug(parameter_received("amount", amount))
+        logger.debug(parameter_received("upper_bound", upper_bound))
+        logger.debug(parameter_received("n", n))
 
         assert amount <= upper_bound, "not enough integers to sample indices from"
 
@@ -162,6 +178,7 @@ class Sponge:
         """
 
         logger.debug(function_begin(self._squeeze_field_element.__name__))
+        logger.debug(parameter_received("n", n))
 
         random_number = self._squeeze_number(self._field.order, n)
         result = self._field(random_number)
@@ -184,6 +201,9 @@ class Sponge:
         """
 
         logger.debug(function_begin(self._squeeze_number.__name__))
+        logger.debug(parameter_received("upper_bound", upper_bound))
+        logger.debug(parameter_received("n", n))
+        logger.debug(parameter_received("postfix", postfix))
 
         random_bytes = self._squeeze(n, postfix=postfix)
 
@@ -210,6 +230,8 @@ class Sponge:
         """
 
         logger.debug(function_begin(self._squeeze.__name__))
+        logger.debug(parameter_received("n", n))
+        logger.debug(parameter_received("postfix", postfix))
 
         self._additional_state += n
 

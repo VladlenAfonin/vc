@@ -102,7 +102,7 @@ def extend_indices(
 
 def fold_polynomial(
     g: galois.Poly,
-    randomness: int,
+    randomness: galois.FieldArray,
     folding_factor: int,
 ) -> galois.Poly:
     """Fold polynomial.
@@ -134,7 +134,7 @@ def fold_polynomial(
 def fold_domain(
     domain: galois.FieldArray,
     folding_factor: int,
-) -> numpy.ndarray:
+) -> galois.FieldArray:
     """Fold domain.
 
     :param domain: Evaluation domain to fold.
@@ -157,7 +157,7 @@ def fold_domain(
 def stack(
     evaluations: galois.FieldArray,
     folding_factor: int,
-) -> numpy.ndarray:
+) -> galois.FieldArray:
     """Stack evaluations.
 
     :param evaluations: Polynomial evaluations over some evaluation domain.

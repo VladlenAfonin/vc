@@ -28,8 +28,12 @@ def quotient(g: galois.Poly, xs: galois.FieldArray) -> galois.Poly:
     return g // galois.Poly.Roots(xs)
 
 
-def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
-    """Correct the degree of a given polynomial using a random polynomial.
+def _get_degree_correction_polynomial(
+    g: galois.Poly,
+    randomness: galois.FieldArray,
+    n: int,
+) -> galois.Poly:
+    """Get the random polynomial for degree correction.
 
     :param g: Polynomial to be degree-corrected.
     :type g: galois.Poly
@@ -42,29 +46,90 @@ def degree_correct(g: galois.Poly, randomness: int, n: int) -> galois.Poly:
     """
 
     random_polynomial = galois.Poly(
-        [randomness**power for power in range(n + 1)], field=g.field
+        [randomness**power for power in range(n + 1)],
+        field=g.field,
+        order="asc",
     )
+
+    return random_polynomial
+
+
+def degree_correct(
+    g: galois.Poly,
+    randomness: galois.FieldArray,
+    n: int,
+) -> galois.Poly:
+    """Correct the degree of a given polynomial using a random polynomial.
+
+    :param g: Polynomial to be degree-corrected.
+    :type g: galois.Poly
+    :param randomness: Randomness to create a random polynomial.
+    :type randomness: int
+    :param n: Degree of a random polynomial.
+    :type n: int
+    :return: Degree-corrected polynomial.
+    :rtype: galois.Poly
+    """
+
+    random_polynomial = _get_degree_correction_polynomial(g, randomness, n)
     return g * random_polynomial
 
 
-def expand_to_nearest_power_of_two(
+def _degree_correct(g: galois.Poly, r: galois.Poly) -> galois.Poly:
+    return g * r
+
+
+# def expand_to_nearest_power_of_two(
+#     g: galois.Poly,
+#     a: int | None,
+#     b: int | None,
+# ) -> galois.Poly:
+#     n_coeffs = g.degree + 1
+#     if is_pow2(n_coeffs):
+#         return g
+
+#     assert a is not None, "a cannot be None when n_coeffs != pow2"
+#     assert b is not None, "b cannot be None when n_coeffs != pow2"
+
+#     nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
+#     factor = galois.Poly([0, 1], order="asc", field=g.field) ** (
+#         nearest_power_of_two - n_coeffs
+#     )
+
+#     return a * g + b * g * factor
+
+
+def expand_to_nearest_power_of_two2_ext(
     g: galois.Poly,
-    a: int | None,
-    b: int | None,
+    r: galois.FieldArray,
+) -> typing.Tuple[galois.Poly, galois.Poly]:
+    n_coeffs = g.degree + 1
+    if is_pow2(n_coeffs):
+        return (r * g, galois.Poly([r], field=g.field, order="asc"))
+
+    nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
+    degree_correction_polynomial = _get_degree_correction_polynomial(
+        g,
+        r,
+        nearest_power_of_two - n_coeffs,
+    )
+
+    return (
+        _degree_correct(g, degree_correction_polynomial),
+        degree_correction_polynomial,
+    )
+
+
+def expand_to_nearest_power_of_two2(
+    g: galois.Poly,
+    r: galois.FieldArray,
 ) -> galois.Poly:
     n_coeffs = g.degree + 1
     if is_pow2(n_coeffs):
-        return g
-
-    assert a is not None, "a cannot be None when n_coeffs != pow2"
-    assert b is not None, "b cannot be None when n_coeffs != pow2"
+        return r * g
 
     nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
-    factor = galois.Poly([0, 1], order="asc", field=g.field) ** (
-        nearest_power_of_two - n_coeffs
-    )
-
-    return a * g + b * g * factor
+    return degree_correct(g, r, nearest_power_of_two - n_coeffs)
 
 
 def scale(g: galois.Poly, a: int) -> galois.Poly:

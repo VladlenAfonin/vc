@@ -8,6 +8,7 @@ import galois
 import numpy
 
 from vc.fri.fold import extend_indices, fold_domain, fold_sort_generate
+from vc.logging import current_value, logging_mark
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
 from vc.fri.proof import FriProof
@@ -41,6 +42,7 @@ class FriVerifier:
             initial_evaluation_domain=parameters.initial_evaluation_domain,
         )
 
+    @logging_mark(logger)
     def verify(self, proof: FriProof) -> bool:
         """Verify proof.
 
@@ -69,6 +71,11 @@ class FriVerifier:
         folding_randomness_array: typing.List[galois.Array] = []
         for i in range(self._parameters.number_of_rounds + 1):
             self._state.sponge.absorb(proof.merkle_roots[i])
+            if i == 0:
+                # This is done only for synchronization between the Prover and the Verifier.
+                r = self._state.sponge.squeeze_field_element()
+                logger.debug(current_value("r", r))
+
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
 
         evaluation_domain = self._parameters.initial_evaluation_domain
@@ -88,10 +95,50 @@ class FriVerifier:
             self._parameters.folding_factor,
         )
 
-        unordered_folded_values = None
-        check_indices = None
-        folded_values = None
-        for i in range(self._parameters.number_of_rounds + 1):
+        # BEGIN FIRST CHECK --------------------
+        unordered_folded_values = []
+
+        for indices, ys in zip(
+            extended_indices,
+            proof.round_proofs[0].stacked_evaluations,
+        ):
+            xs = evaluation_domain[indices]
+            ys_degree_corrected = ys * proof.degree_correction_polynomial(xs)
+            folded_polynomial = galois.lagrange_poly(xs, ys_degree_corrected)
+            unordered_folded_values.append(
+                folded_polynomial(folding_randomness_array[0]),
+            )
+
+        query_indices_range //= self._parameters.folding_factor
+        query_indices, check_indices, folded_values = fold_sort_generate(
+            query_indices,
+            query_indices_range,
+            unordered_folded_values,
+        )
+
+        evaluation_domain_length //= self._parameters.folding_factor
+        evaluation_domain = fold_domain(
+            evaluation_domain,
+            self._parameters.folding_factor,
+        )
+
+        extended_indices = extend_indices(
+            query_indices,
+            evaluation_domain_length,
+            self._parameters.folding_factor,
+        )
+
+        for j, se in enumerate(proof.round_proofs[1].stacked_evaluations):
+            temp_result = folded_values[j] == se[check_indices[j]]
+            if not temp_result:
+                logger.error(f"consistency check failed")
+                return False
+        # END   FIRST CHECK --------------------
+
+        # unordered_folded_values = None
+        # check_indices = None
+        # folded_values = None
+        for i in range(1, self._parameters.number_of_rounds + 1):
             if check_indices is not None:
                 assert folded_values is not None
 

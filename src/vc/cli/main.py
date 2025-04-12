@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import logging.config
+import random
 import sys
 import argparse
 import time
@@ -11,10 +12,13 @@ from vc.fri.prover import FriProver
 from vc.fri.parameters import FriParameters
 from vc.fri.verifier import FriVerifier
 from vc.constants import FIELD_GOLDILOCKS
-from vc.logging import function_begin, function_end
-
-
-logger = logging.getLogger(__name__)
+from vc.logging import (
+    current_value,
+    function_begin,
+    function_end,
+    logging_mark,
+    parameter_received,
+)
 
 
 logging_config = {
@@ -33,10 +37,14 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc.cli.main": {"level": "INFO", "handlers": ["stdout"]},
-        # "vc.sponge": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.cli.main": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.fri.prover": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.fri.verifier": {"level": "DEBUG", "handlers": ["stdout"]},
     },
 }
+
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(logging_config)
 
 
 class FriOptionsDefault:
@@ -64,6 +72,8 @@ class FriOptions:
     """Number of verifier repetitions."""
     expansion_factor_log: int
     """Expansion factor. Code rate reciprocal."""
+    seed: int | None = None
+    """Randomness seed."""
 
 
 def parse_arguments() -> FriOptions:
@@ -152,6 +162,19 @@ def parse_arguments() -> FriOptions:
         type=int,
     )
 
+    parser.add_argument(
+        "-s",
+        "--seed",
+        action="store",
+        dest="seed",
+        help=f"randomness seed. default: 64 bit integer chosen at random",
+        nargs=1,
+        default=[None],
+        required=False,
+        metavar="LEVEL",
+        type=int,
+    )
+
     namespace = parser.parse_args()
 
     # TODO: Add argument verification.
@@ -165,17 +188,32 @@ def parse_arguments() -> FriOptions:
         initial_degree_log=namespace.initial_degree_log[0],
         security_level_bits=namespace.security_level_bits[0],
         expansion_factor_log=namespace.expansion_factor_log[0],
+        seed=namespace.seed[0],
     )
 
 
+def generate_random_seed() -> int:
+    return random.getrandbits(64)
+
+
+@logging_mark(logger)
 def main() -> int:
-    logging.config.dictConfig(logging_config)
-
-    logger.debug(function_begin(main.__name__))
-
     options = parse_arguments()
+    logger.debug(parameter_received("cli_options", options))
+
+    if options.seed is None:
+        logger.debug(f"seed was not provided. generating seed")
+        options.seed = generate_random_seed()
+        logger.debug(current_value("seed", options.seed))
+
     field = galois.GF(options.field)
-    g = galois.Poly.Random((1 << options.initial_degree_log) - 1, field=field)
+    g = galois.Poly.Random(
+        (1 << options.initial_degree_log) - 1,
+        field=field,
+        seed=options.seed,
+    )
+
+    logger.debug(current_value("polynomial to be proven", g))
 
     fri_parameters = FriParameters(
         folding_factor_log=options.folding_factor_log,
@@ -186,7 +224,7 @@ def main() -> int:
         field=field,
     )
 
-    logger.info(f"fri parameters:{fri_parameters}")
+    logger.info(current_value("fri parameters", fri_parameters))
 
     try:
         begin = time.time()
