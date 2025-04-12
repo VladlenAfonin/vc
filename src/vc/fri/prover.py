@@ -7,7 +7,6 @@ import typing
 import galois
 
 from vc.base import is_pow2
-from vc.constants import LOGGER_FRI
 from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
 from vc.fri.proof import FriProof, RoundProof
 from vc.sponge import Sponge
@@ -15,7 +14,7 @@ from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
 
 
-logger = logging.getLogger(LOGGER_FRI)
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(init=False, slots=True)
@@ -104,6 +103,9 @@ class FriProver:
         for i in range(self._parameters.number_of_rounds):
             self._round()
 
+        # This is moved here so that verifier and prover both access the Sponge in the same order.
+        final_randomness = self._state.sponge.squeeze_field_element()
+
         round_proofs: typing.List[RoundProof] = []
 
         query_indices_range = (
@@ -128,7 +130,6 @@ class FriProver:
             round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
 
         # The final polynomial does not need any proofs.
-        final_randomness = self._state.sponge.squeeze_field_element()
         final_polynomial = fold_polynomial(
             self._state.polynomial,
             final_randomness,

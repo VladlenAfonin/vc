@@ -9,10 +9,10 @@ import typing
 import galois
 import numpy
 
-from vc.constants import LOGGER_MATH
+from vc.logging import function_begin, function_end, parameter_received
 
 
-logger = logging.getLogger(LOGGER_MATH)
+logger = logging.getLogger(__name__)
 BYTE_SIZE_BITS = 8
 
 
@@ -53,8 +53,15 @@ class Sponge:
         :type obj: typing.Any
         """
 
+        logger.debug(function_begin(self.absorb.__name__))
+        logger.debug(parameter_received("obj", obj))
+
+        self._additional_state = 0
+
         self._len += 1
         self._objects.append(obj)
+
+        logger.debug(function_end(self.absorb.__name__))
 
     def squeeze(self, n: int = 32) -> bytes:
         """Sample random data. This function is to be called by the prover.
@@ -65,9 +72,13 @@ class Sponge:
         :rtype: bytes
         """
 
-        return self._squeeze(n)
+        logger.debug(function_begin(self.squeeze.__name__))
+        result = self._squeeze(n)
+        logger.debug(function_end(self.squeeze.__name__, result))
 
-    def squeeze_field_element(self, n: int = 32) -> galois.Array:
+        return result
+
+    def squeeze_field_element(self, n: int = 32) -> galois.FieldArray:
         """Sample random field element. This function is to be called by the prover.
 
         :param n: Number of bytes to squeeze, defaults to 32.
@@ -76,7 +87,11 @@ class Sponge:
         :rtype: galois.FieldArray
         """
 
-        return self._squeeze_field_element(n)
+        logger.debug(function_begin(self.squeeze_field_element.__name__))
+        result = self._squeeze_field_element(n)
+        logger.debug(function_end(self.squeeze_field_element.__name__, result))
+
+        return result
 
     def squeeze_index(self, upper_bound: int, n: int = 32) -> int:
         """Squeeze index.
@@ -89,7 +104,11 @@ class Sponge:
         :rtype: int
         """
 
-        return self._squeeze_number(upper_bound, n)
+        logger.debug(function_begin(self.squeeze_index.__name__))
+        result = self._squeeze_number(upper_bound, n)
+        logger.debug(function_end(self.squeeze_index.__name__, result))
+
+        return result
 
     def squeeze_indices(
         self,
@@ -109,6 +128,8 @@ class Sponge:
         :rtype: typing.List[int]
         """
 
+        logger.debug(function_begin(self.squeeze_indices.__name__))
+
         assert amount <= upper_bound, "not enough integers to sample indices from"
 
         if amount == upper_bound:
@@ -125,7 +146,11 @@ class Sponge:
 
             i += 1
 
-        return numpy.sort(numpy.array(result))
+        result = numpy.sort(numpy.array(result))
+
+        logger.debug(function_end(self.squeeze_indices.__name__, result))
+
+        return result
 
     def _squeeze_field_element(self, n: int) -> galois.FieldArray:
         """Squeeze a field element.
@@ -136,8 +161,14 @@ class Sponge:
         :rtype: galois.Array
         """
 
+        logger.debug(function_begin(self._squeeze_field_element.__name__))
+
         random_number = self._squeeze_number(self._field.order, n)
-        return self._field(random_number)
+        result = self._field(random_number)
+
+        logger.debug(function_end(self._squeeze_field_element.__name__, result))
+
+        return result
 
     def _squeeze_number(self, upper_bound: int, n: int, postfix: bytes = b"") -> int:
         """Squeeze a number.
@@ -152,13 +183,19 @@ class Sponge:
         :rtype: int
         """
 
+        logger.debug(function_begin(self._squeeze_number.__name__))
+
         random_bytes = self._squeeze(n, postfix=postfix)
 
         accumulator = 0
         for random_byte in random_bytes:
             accumulator = (accumulator << BYTE_SIZE_BITS) ^ int(random_byte)
 
-        return accumulator % upper_bound
+        result = accumulator % upper_bound
+
+        logger.debug(function_end(self._squeeze_number.__name__, result))
+
+        return result
 
     def _squeeze(self, n: int, postfix: bytes = b"") -> bytes:
         """Squeeze bytes.
@@ -172,8 +209,15 @@ class Sponge:
         :rtype: bytes
         """
 
+        logger.debug(function_begin(self._squeeze.__name__))
+
+        self._additional_state += n
+
         current_state = self._serialize()
-        result = hashlib.shake_256(current_state + postfix).digest(n)
-        # self._additional_state += 1
+        result = hashlib.shake_256(
+            current_state + self._additional_state.to_bytes(4) + postfix
+        ).digest(n)
+
+        logger.debug(function_end(self._squeeze.__name__))
 
         return result

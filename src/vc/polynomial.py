@@ -8,10 +8,9 @@ import numpy
 import galois
 
 from vc.base import get_nearest_power_of_two, is_pow2
-from vc.constants import LOGGER_MATH
 
 
-logger = logging.getLogger(LOGGER_MATH)
+logger = logging.getLogger(__name__)
 
 
 def quotient(g: galois.Poly, xs: galois.FieldArray) -> galois.Poly:

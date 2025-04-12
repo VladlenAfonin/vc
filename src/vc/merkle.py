@@ -10,10 +10,10 @@ import galois.typing
 import numpy
 import pymerkle
 
-from vc.constants import LOGGER_MATH, MEKRLE_HASH_ALGORITHM
+from vc.constants import MEKRLE_HASH_ALGORITHM
 
 
-logger = logging.getLogger(LOGGER_MATH)
+logger = logging.getLogger(__name__)
 hash_buff = pymerkle.InmemoryTree(MEKRLE_HASH_ALGORITHM).hash_buff
 
 

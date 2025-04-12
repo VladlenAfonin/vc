@@ -7,13 +7,16 @@ import time
 
 import galois
 
-from vc.constants import FIELD_GOLDILOCKS, LOGGER_FRI
 from vc.fri.prover import FriProver
 from vc.fri.parameters import FriParameters
 from vc.fri.verifier import FriVerifier
+from vc.constants import FIELD_GOLDILOCKS
+from vc.logging import function_begin, function_end
 
 
-logger = logging.getLogger(LOGGER_FRI)
+logger = logging.getLogger(__name__)
+
+
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -30,7 +33,8 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.cli.main": {"level": "INFO", "handlers": ["stdout"]},
+        # "vc.sponge": {"level": "DEBUG", "handlers": ["stdout"]},
     },
 }
 
@@ -63,6 +67,8 @@ class FriOptions:
 
 
 def parse_arguments() -> FriOptions:
+    logger.debug(function_begin(parse_arguments.__name__))
+
     parser = argparse.ArgumentParser(
         prog="vc",
         description="FRI polynomial commitment scheme experimentation program",
@@ -150,6 +156,8 @@ def parse_arguments() -> FriOptions:
 
     # TODO: Add argument verification.
 
+    logger.debug(function_end(parse_arguments.__name__))
+
     return FriOptions(
         folding_factor_log=namespace.folding_factor_log[0],
         field=namespace.field[0],
@@ -162,6 +170,8 @@ def parse_arguments() -> FriOptions:
 
 def main() -> int:
     logging.config.dictConfig(logging_config)
+
+    logger.debug(function_begin(main.__name__))
 
     options = parse_arguments()
     field = galois.GF(options.field)
@@ -198,6 +208,8 @@ def main() -> int:
         )
         logger.exception(f"error message: {exception}")
         raise
+
+    logger.debug(function_end(main.__name__))
 
     return 0
 

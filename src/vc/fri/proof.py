@@ -9,10 +9,8 @@ import galois
 import numpy
 import pymerkle
 
-from vc.constants import LOGGER_FRI
 
-
-logger = logging.getLogger(LOGGER_FRI)
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(slots=True)

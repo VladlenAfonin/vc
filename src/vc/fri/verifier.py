@@ -7,7 +7,6 @@ import typing
 import galois
 import numpy
 
-from vc.constants import LOGGER_FRI
 from vc.fri.fold import extend_indices, fold_domain, fold_sort_generate
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
@@ -15,7 +14,7 @@ from vc.fri.proof import FriProof
 from vc.sponge import Sponge
 
 
-logger = logging.getLogger(LOGGER_FRI)
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(init=False, slots=True)

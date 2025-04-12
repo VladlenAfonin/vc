@@ -5,10 +5,9 @@ import math
 import galois
 
 from vc.base import is_pow2
-from vc.constants import LOGGER_FRI
 
 
-logger = logging.getLogger(LOGGER_FRI)
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(init=False, slots=True, repr=False)
