@@ -79,24 +79,24 @@ def _degree_correct(g: galois.Poly, r: galois.Poly) -> galois.Poly:
     return g * r
 
 
-# def expand_to_nearest_power_of_two(
-#     g: galois.Poly,
-#     a: int | None,
-#     b: int | None,
-# ) -> galois.Poly:
-#     n_coeffs = g.degree + 1
-#     if is_pow2(n_coeffs):
-#         return g
+def expand_to_nearest_power_of_two(
+    g: galois.Poly,
+    a: int | None,
+    b: int | None,
+) -> galois.Poly:
+    n_coeffs = g.degree + 1
+    if is_pow2(n_coeffs):
+        return g
 
-#     assert a is not None, "a cannot be None when n_coeffs != pow2"
-#     assert b is not None, "b cannot be None when n_coeffs != pow2"
+    assert a is not None, "a cannot be None when n_coeffs != pow2"
+    assert b is not None, "b cannot be None when n_coeffs != pow2"
 
-#     nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
-#     factor = galois.Poly([0, 1], order="asc", field=g.field) ** (
-#         nearest_power_of_two - n_coeffs
-#     )
+    nearest_power_of_two = get_nearest_power_of_two(n_coeffs)
+    factor = galois.Poly([0, 1], order="asc", field=g.field) ** (
+        nearest_power_of_two - n_coeffs
+    )
 
-#     return a * g + b * g * factor
+    return a * g + b * g * factor
 
 
 def expand_to_nearest_power_of_two2_ext(
