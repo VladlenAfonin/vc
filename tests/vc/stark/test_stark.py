@@ -4,7 +4,12 @@ import pytest
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
 from vc.fri.prover import FriProver
-from vc.stark.airs.fibonacci import fib, get_aet
+from vc.stark.airs.fibonacci import (
+    fib,
+    get_aet,
+    get_boundary_constraints,
+    get_transition_constraints,
+)
 from vc.stark.parameters import StarkParameters
 from vc.stark.prover import StarkProver
 from vc.constants import FIELD_GOLDILOCKS
@@ -44,6 +49,7 @@ def get_test_stark_prover(n: int) -> StarkProver:
         stark_parameters=stark_parameters,
         fri_prover=fri_prover,
         state=stark_prover_state,
+        fri_parameters=fri_parameters,
     )
 
 
@@ -51,7 +57,6 @@ def get_test_stark_prover(n: int) -> StarkProver:
 def test_get_trace_polynomials(n: int):
     stark_prover = get_test_stark_prover(n)
     aet = get_aet(n)
-    print(f"{stark_prover.state.omicron_domain.shape = }")
 
     trace_polynomials = stark_prover.get_trace_polynomials(aet)
 
@@ -66,3 +71,16 @@ def test_get_trace_polynomials(n: int):
     assert trace_polynomials[1](
         stark_prover.stark_parameters.omicron ** (n - 1)
     ) == fib(n), "invalid first row"
+
+
+@pytest.mark.parametrize("n", [4])
+def test_stark(n: int):
+    print()
+
+    result = fib(n)
+    aet = get_aet(n)
+    boundary_constraints = get_boundary_constraints(n, result)
+    transition_constraints = get_transition_constraints()
+
+    stark_prover = get_test_stark_prover(n)
+    stark_prover.prove(aet, transition_constraints, boundary_constraints)

@@ -9,6 +9,7 @@ import galois
 
 from vc.constants import FIELD_GOLDILOCKS
 from vc.polynomial import MPoly
+from vc.stark.boundary import BoundaryConstraint
 
 
 # TODO: Refactor into some state or options.
@@ -61,17 +62,15 @@ def get_aet(
 def get_boundary_constraints(
     n: int,
     result: int,
-) -> galois.FieldArray:
+) -> typing.List[BoundaryConstraint]:
     """Get boundary constraints."""
 
     assert n > 0, "unable to create boundary constrainst for n < 1"
 
-    bc = field(
-        [
-            [0, 0, 0],
-            [n - 1, 1, result],
-        ]
-    )
+    bc = [
+        BoundaryConstraint(x=0, y=0, value=field(0)),
+        BoundaryConstraint(x=n - 1, y=1, value=field(result)),
+    ]
 
     return bc
 

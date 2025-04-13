@@ -9,6 +9,7 @@ from vc.stark.airs.fibonacci import (
     get_boundary_constraints,
     get_transition_constraints,
 )
+from vc.stark.boundary import BoundaryConstraint
 
 
 @pytest.mark.parametrize(
@@ -88,22 +89,18 @@ def test_fib(
         (
             1,
             fib(1),
-            field(
-                [
-                    [0, 0, 0],
-                    [0, 1, 1],
-                ],
-            ),
+            [
+                BoundaryConstraint(x=0, y=0, value=field(0)),
+                BoundaryConstraint(x=0, y=1, value=field(1)),
+            ],
         ),
         (
             40,
             fib(40),
-            field(
-                [
-                    [0, 0, 0],
-                    [39, 1, fib(40)],
-                ],
-            ),
+            [
+                BoundaryConstraint(x=0, y=0, value=field(0)),
+                BoundaryConstraint(x=39, y=1, value=field(fib(40))),
+            ],
         ),
     ],
 )

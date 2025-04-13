@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 import typing
 
 import galois
@@ -6,7 +7,9 @@ import numpy
 import numpy.typing
 
 from vc.base import get_nearest_power_of_two, is_pow2
-from vc.polynomial import MPoly
+from vc.fri.parameters import FriParameters
+from vc.polynomial import MPoly, quotient, scale
+from vc.stark.boundary import Boundaries, BoundaryConstraint
 from vc.stark.proof import StarkProof
 from vc.stark.parameters import StarkParameters
 from vc.fri.prover import FriProver
@@ -14,6 +17,7 @@ from vc.constants import FIELD_GOLDILOCKS
 
 
 field = FIELD_GOLDILOCKS
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(slots=True)
@@ -34,15 +38,77 @@ class StarkProver:
             )
 
     stark_parameters: StarkParameters
+    fri_parameters: FriParameters
     fri_prover: FriProver
     state: StarkProverState
 
-    # def prove(
-    #     self,
-    #     aet: galois.FieldArray,
-    #     transition_constraints: typing.List[MPoly],
-    #     boundary_constraints: galois.Field,
-    # ) -> StarkProof: ...
+    def prove(
+        self,
+        aet: galois.FieldArray,
+        transition_constraints: typing.List[MPoly],
+        boundary_constraints: typing.List[BoundaryConstraint],
+    ):  # -> StarkProof:
+        trace_polynomials = self.get_trace_polynomials(aet)
+        n_registers = len(trace_polynomials)
+
+        boundaries = self.get_boundary_polynomials(
+            n_registers,
+            boundary_constraints,
+        )
+        boundary_quotients = [
+            (tp - bp) // bz
+            for tp, bp, bz in zip(
+                trace_polynomials,
+                boundaries.polynomials,
+                boundaries.zerofiers,
+            )
+        ]
+
+        boundary_quotient_proofs = []
+        for boundary_quotient in boundary_quotients:
+            boundary_quotient_proofs.append(
+                self.fri_prover.prove(boundary_quotient),
+            )
+
+        # scaled_trace_polynomials = [
+        #     scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
+        # ]
+
+        # transition_polynomials = [
+        #     tc.evals(trace_polynomials + scaled_trace_polynomials)
+        #     for tc in transition_constraints
+        # ]
+
+        # print(f"{transition_polynomials = }")
+
+    def get_boundary_polynomials(
+        self,
+        n_registers: int,
+        boundary_constraints: typing.List[BoundaryConstraint],
+    ) -> Boundaries:
+        polynomials = []
+        zerofiers = []
+
+        for i in range(n_registers):
+            current_boundary_constraints = [
+                bc for bc in boundary_constraints if bc.y == i
+            ]
+
+            xs = self.state.omicron_domain[
+                [bc.x for bc in current_boundary_constraints]
+            ]
+            ys = self.stark_parameters.field(
+                [bc.value for bc in current_boundary_constraints]
+            )
+
+            zerofiers.append(galois.Poly.Roots(xs))
+            polynomials.append(galois.lagrange_poly(xs, ys))
+
+        return Boundaries(
+            constraints=boundary_constraints,
+            polynomials=polynomials,
+            zerofiers=zerofiers,
+        )
 
     def get_trace_polynomials(self, aet: galois.FieldArray) -> typing.List[galois.Poly]:
         # TODO: This does not yet support "not power of two" AET heights.
