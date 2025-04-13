@@ -79,6 +79,16 @@ def _degree_correct(g: galois.Poly, r: galois.Poly) -> galois.Poly:
     return g * r
 
 
+def expand_ext(g: galois.Poly, randomness: galois.FieldArray, target_n_coeffs: int):
+    n_coeffs = g.degree + 1
+    assert (
+        target_n_coeffs >= n_coeffs
+    ), "you cannot ask for less coefficients than you have"
+
+    r = _get_degree_correction_polynomial(g, randomness, target_n_coeffs - n_coeffs)
+    return (g * r, r)
+
+
 def expand_to_nearest_power_of_two(
     g: galois.Poly,
     a: int | None,

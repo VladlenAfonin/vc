@@ -1,4 +1,6 @@
+import pytest
 import galois
+
 from vc.constants import FIELD_GOLDILOCKS
 from vc.fri.parameters import FriParameters
 from vc.fri.prover import FriProver
@@ -35,16 +37,20 @@ def test_fri_pow2() -> None:
     assert result
 
 
-def test_fri_not_pow2() -> None:
-    # Currently this number should represent the nearest
-    # power of two for the actual polynomial degree.
-    #
-    # Example that fails:
-    # - initial_coefficients_length_log = 4 (evaluation_domain.size = 16)
-    # - f.n_coeffs = 6
-
-    initial_coefficients_length_log = 3
-
+@pytest.mark.parametrize(
+    "initial_coefficients_length_log, polynomial_degree, seed",
+    [
+        (3, 6, 43),
+        (4, 6, 44),
+        (5, 6, 45),
+        (6, 6, 46),
+    ],
+)
+def test_fri_not_pow2(
+    initial_coefficients_length_log: int,
+    polynomial_degree: int,
+    seed: int,
+) -> None:
     fri_parameters = FriParameters(
         folding_factor_log=1,
         expansion_factor_log=1,
@@ -57,7 +63,7 @@ def test_fri_not_pow2() -> None:
     prover = FriProver(fri_parameters)
     verifier = FriVerifier(fri_parameters)
 
-    f = galois.Poly.Random(6, field=TEST_FIELD, seed=43)
+    f = galois.Poly.Random(polynomial_degree, field=TEST_FIELD, seed=seed)
 
     proof = prover.prove(f)
     result = verifier.verify(proof)

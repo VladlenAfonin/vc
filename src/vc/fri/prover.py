@@ -6,11 +6,10 @@ import typing
 
 import galois
 
-from vc.base import is_pow2
 from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
 from vc.fri.proof import FriProof, RoundProof
 from vc.logging import current_value, logging_mark
-from vc.polynomial import expand_to_nearest_power_of_two2_ext
+from vc.polynomial import expand_ext, expand_to_nearest_power_of_two2_ext
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
@@ -45,10 +44,10 @@ class FriProver:
         """Merkle root of current evaluations."""
 
         def __init__(self, f: galois.Poly, options: FriParameters) -> None:
-            coefficients_length = f.degree + 1
-            assert is_pow2(
-                coefficients_length
-            ), "number of coefficients in polynomial must be a power of two"
+            # coefficients_length = f.degree + 1
+            # assert is_pow2(
+            #     coefficients_length
+            # ), "number of coefficients in polynomial must be a power of two"
 
             self.polynomial = f
             field: type[galois.FieldArray] = f.field
@@ -105,10 +104,14 @@ class FriProver:
         self._state.merkle_trees.append(merkle_tree)
 
         # Transform f to g that has pow2 coefficients.
-        r = self._state.sponge.squeeze_field_element()
-        logger.debug(current_value("r", r))
+        randomness = self._state.sponge.squeeze_field_element()
+        logger.debug(current_value("randomness", randomness))
 
-        g, degree_correction_polynomial = expand_to_nearest_power_of_two2_ext(f, r)
+        g, degree_correction_polynomial = expand_ext(
+            f,
+            randomness,
+            self._parameters.initial_coefficients_length,
+        )
         logger.debug(current_value("degree corrected polynomial", g))
         logger.debug(
             current_value(
