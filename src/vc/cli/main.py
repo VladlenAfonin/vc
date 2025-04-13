@@ -14,8 +14,6 @@ from vc.fri.verifier import FriVerifier
 from vc.constants import FIELD_GOLDILOCKS
 from vc.logging import (
     current_value,
-    function_begin,
-    function_end,
     logging_mark,
     parameter_received,
 )
@@ -37,7 +35,7 @@ logging_config = {
         }
     },
     "loggers": {
-        "vc.cli.main": {"level": "INFO", "handlers": ["stdout"]},
+        # "vc.cli.main": {"level": "INFO", "handlers": ["stdout"]},
         # "vc.fri.prover": {"level": "DEBUG", "handlers": ["stdout"]},
         # "vc.fri.verifier": {"level": "DEBUG", "handlers": ["stdout"]},
     },
@@ -76,9 +74,8 @@ class FriOptions:
     """Randomness seed."""
 
 
+@logging_mark(logger)
 def parse_arguments() -> FriOptions:
-    logger.debug(function_begin(parse_arguments.__name__))
-
     parser = argparse.ArgumentParser(
         prog="vc",
         description="FRI polynomial commitment scheme experimentation program",
@@ -179,8 +176,6 @@ def parse_arguments() -> FriOptions:
 
     # TODO: Add argument verification.
 
-    logger.debug(function_end(parse_arguments.__name__))
-
     return FriOptions(
         folding_factor_log=namespace.folding_factor_log[0],
         field=namespace.field[0],
@@ -204,6 +199,7 @@ def main() -> int:
     if options.seed is None:
         logger.debug(f"seed was not provided. generating seed")
         options.seed = generate_random_seed()
+        print(f"seed: {options.seed}")
         logger.debug(current_value("seed", options.seed))
 
     field = galois.GF(options.field)
@@ -224,30 +220,30 @@ def main() -> int:
         field=field,
     )
 
-    logger.info(current_value("fri parameters", fri_parameters))
+    print(f"fri parameters: {fri_parameters}")
 
     try:
         begin = time.time()
         prover = FriProver(fri_parameters)
         proof = prover.prove(g)
         end = time.time()
-        logger.info(f"prover time: {end - begin:.2f} s")
-        logger.info(f"proof:{proof}")
+        print(f"prover time: {end - begin:.2f} s")
+        print(f"proof:{proof}")
 
         begin = time.time()
         verifier = FriVerifier(fri_parameters)
         verification_result = verifier.verify(proof)
         end = time.time()
-        logger.info(f"verifier time: {(end - begin) * 1000:.0f} ms")
-        logger.info(f"verification result: {verification_result}")
+        print(f"verifier time: {(end - begin) * 1000:.0f} ms")
+        print(f"verification result: {verification_result}")
     except Exception as exception:
-        logger.error(
-            f"coefficients of the polynomial which caused an error (in ascending order): {g.coefficients(order='asc')}"
+        print(
+            f"coefficients of the polynomial which caused an error "
+            + "(in ascending order): {g.coefficients(order='asc')}",
+            file=sys.stderr,
         )
         logger.exception(f"error message: {exception}")
         raise
-
-    logger.debug(function_end(main.__name__))
 
     return 0
 
