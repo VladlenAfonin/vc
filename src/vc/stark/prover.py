@@ -47,7 +47,7 @@ class StarkProver:
         aet: galois.FieldArray,
         transition_constraints: typing.List[MPoly],
         boundary_constraints: typing.List[BoundaryConstraint],
-    ):  # -> StarkProof:
+    ) -> StarkProof:
         trace_polynomials = self.get_trace_polynomials(aet)
         n_registers = len(trace_polynomials)
 
@@ -63,23 +63,40 @@ class StarkProver:
                 boundaries.zerofiers,
             )
         ]
-
         boundary_quotient_proofs = []
         for boundary_quotient in boundary_quotients:
             boundary_quotient_proofs.append(
                 self.fri_prover.prove(boundary_quotient),
             )
 
-        # scaled_trace_polynomials = [
-        #     scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
-        # ]
+        scaled_trace_polynomials = [
+            scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
+        ]
 
-        # transition_polynomials = [
-        #     tc.evals(trace_polynomials + scaled_trace_polynomials)
-        #     for tc in transition_constraints
-        # ]
+        transition_polynomials = [
+            tc.evals(trace_polynomials + scaled_trace_polynomials)
+            for tc in transition_constraints
+        ]
 
-        # print(f"{transition_polynomials = }")
+        omicron_zerofier = galois.Poly.Roots(
+            self.state.omicron_domain[0 : aet.shape[0] - 1]
+        )
+        omicron_zerofier_proof = self.fri_prover.prove(omicron_zerofier)
+
+        # INFO: Transition polynomials are expected to equal 0 at omicron
+        #       domain, so we only need to divide out the zerofier.
+        transition_quotients = [tp // omicron_zerofier for tp in transition_polynomials]
+        transition_quotient_proofs = []
+        for transition_quotient in transition_quotients:
+            transition_quotient_proofs.append(
+                self.fri_prover.prove(transition_quotient),
+            )
+
+        return StarkProof(
+            omicron_zerofier_proof=omicron_zerofier_proof,
+            boundary_quotient_proofs=boundary_quotient_proofs,
+            transition_quotient_proofs=transition_quotient_proofs,
+        )
 
     def get_boundary_polynomials(
         self,
