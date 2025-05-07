@@ -66,8 +66,8 @@ It is assumed below that you have installed python from the [official website](h
 
 # Usage
 
-```
-$ vc --help
+```bash
+vc --help
 ```
 
 ```
@@ -94,8 +94,8 @@ options:
 
 ## Example
 
-```
-$ vc --ff 3 --id 10 --fd 1 --sl 16 --ef 2
+```bash
+vc --ff 3 --id 10 --fd 1 --sl 16 --ef 2
 ```
 
 ```
