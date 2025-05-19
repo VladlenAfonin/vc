@@ -90,16 +90,16 @@ def test_fib(
             1,
             fib(1),
             [
-                BoundaryConstraint(x=0, y=0, value=field(0)),
-                BoundaryConstraint(x=0, y=1, value=field(1)),
+                BoundaryConstraint(i=0, j=0, value=field(0)),
+                BoundaryConstraint(i=0, j=1, value=field(1)),
             ],
         ),
         (
             40,
             fib(40),
             [
-                BoundaryConstraint(x=0, y=0, value=field(0)),
-                BoundaryConstraint(x=39, y=1, value=field(fib(40))),
+                BoundaryConstraint(i=0, j=0, value=field(0)),
+                BoundaryConstraint(i=39, j=1, value=field(fib(40))),
             ],
         ),
     ],

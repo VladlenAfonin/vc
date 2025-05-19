@@ -41,6 +41,11 @@ class Sponge:
         self._len = 0
         self._additional_state = 0
 
+    def reset(self) -> None:
+        self._objects = []
+        self._len = 0
+        self._additional_state = 0
+
     def _serialize(self) -> bytes:
         """Serialize current state into byte array."""
 

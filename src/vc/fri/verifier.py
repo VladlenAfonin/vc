@@ -31,12 +31,16 @@ class FriVerifier:
         initial_evaluation_domain: galois.Array
         """Initial evaluation domain."""
 
+        def reset(self) -> None:
+            self.sponge.reset()
+
     _parameters: FriParameters
     _state: FriVerifier.State
 
     def __init__(self, parameters: FriParameters) -> None:
-        self._parameters = parameters
         sponge = Sponge(parameters.field)
+
+        self._parameters = parameters
         self._state = FriVerifier.State(
             sponge=sponge,
             initial_evaluation_domain=parameters.initial_evaluation_domain,
@@ -51,6 +55,8 @@ class FriVerifier:
         :return: ``True`` if ``proof`` is valid. ``False`` otherwise.
         :rtype: bool
         """
+
+        self._state.reset()
 
         if (
             proof.final_polynomial.degree + 1
@@ -131,7 +137,7 @@ class FriVerifier:
         for j, se in enumerate(proof.round_proofs[1].stacked_evaluations):
             temp_result = folded_values[j] == se[check_indices[j]]
             if not temp_result:
-                logger.error(f"consistency check failed")
+                logger.error(f"first consistency check failed")
                 return False
         # END   FIRST CHECK --------------------
 
@@ -145,7 +151,7 @@ class FriVerifier:
                 for j, se in enumerate(proof.round_proofs[i].stacked_evaluations):
                     temp_result = folded_values[j] == se[check_indices[j]]
                     if not temp_result:
-                        logger.error(f"consistency check failed")
+                        logger.error(f"second consistency check failed")
                         return False
 
             unordered_folded_values = []

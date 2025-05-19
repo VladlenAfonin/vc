@@ -3,12 +3,10 @@ import logging
 import typing
 
 import galois
-import numpy
-import numpy.typing
 
-from vc.base import get_nearest_power_of_two, is_pow2
+from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
-from vc.polynomial import MPoly, quotient, scale
+from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
 from vc.stark.proof import StarkProof
 from vc.stark.parameters import StarkParameters
@@ -106,13 +104,13 @@ class StarkProver:
         polynomials = []
         zerofiers = []
 
-        for i in range(n_registers):
+        for j in range(n_registers):
             current_boundary_constraints = [
-                bc for bc in boundary_constraints if bc.y == i
+                bc for bc in boundary_constraints if bc.j == j
             ]
 
             xs = self.state.omicron_domain[
-                [bc.x for bc in current_boundary_constraints]
+                [bc.i for bc in current_boundary_constraints]
             ]
             ys = self.stark_parameters.field(
                 [bc.value for bc in current_boundary_constraints]

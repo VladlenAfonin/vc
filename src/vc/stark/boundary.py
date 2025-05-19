@@ -5,8 +5,8 @@ import galois
 
 @dataclasses.dataclass(slots=True)
 class BoundaryConstraint:
-    x: int
-    y: int
+    i: int
+    j: int
     value: galois.FieldArray
 
 

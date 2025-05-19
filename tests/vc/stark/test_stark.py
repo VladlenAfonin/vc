@@ -1,9 +1,11 @@
 import math
+import typing
 import pytest
 
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
 from vc.fri.prover import FriProver
+from vc.fri.verifier import FriVerifier
 from vc.stark.airs.fibonacci import (
     fib,
     get_aet,
@@ -13,12 +15,13 @@ from vc.stark.airs.fibonacci import (
 from vc.stark.parameters import StarkParameters
 from vc.stark.prover import StarkProver
 from vc.constants import FIELD_GOLDILOCKS
+from vc.stark.verifier import StarkVerifier
 
 
 TEST_FIELD = FIELD_GOLDILOCKS
 
 
-def get_test_stark_prover(n: int) -> StarkProver:
+def get_test_stark(n: int) -> typing.Tuple[StarkProver, StarkVerifier]:
     expansion_factor_log = 1
     expansion_factor = 1 << expansion_factor_log
 
@@ -39,23 +42,33 @@ def get_test_stark_prover(n: int) -> StarkProver:
         field=TEST_FIELD,
     )
     fri_prover = FriProver(fri_parameters)
+    fri_verifier = FriVerifier(fri_parameters)
 
     stark_prover_state = StarkProver.StarkProverState(
         field=TEST_FIELD,
         omicron=omicron,
         aet_height=n,
     )
-    return StarkProver(
-        stark_parameters=stark_parameters,
-        fri_prover=fri_prover,
-        state=stark_prover_state,
-        fri_parameters=fri_parameters,
+    return (
+        StarkProver(
+            stark_parameters=stark_parameters,
+            fri_prover=fri_prover,
+            state=stark_prover_state,
+            fri_parameters=fri_parameters,
+        ),
+        StarkVerifier(
+            state=StarkVerifier.StarkVerifierState(
+                fri_verifier=fri_verifier,
+                fri_parameters=fri_parameters,
+                omicron=omicron,
+            )
+        ),
     )
 
 
 @pytest.mark.parametrize("n", [4, 8, 16])
 def test_get_trace_polynomials(n: int):
-    stark_prover = get_test_stark_prover(n)
+    stark_prover, _ = get_test_stark(n)
     aet = get_aet(n)
 
     trace_polynomials = stark_prover.get_trace_polynomials(aet)
@@ -73,14 +86,15 @@ def test_get_trace_polynomials(n: int):
     ) == fib(n), "invalid first row"
 
 
-@pytest.mark.parametrize("n", [4])
+@pytest.mark.parametrize("n", [16])
 def test_stark(n: int):
-    print()
-
     result = fib(n)
     aet = get_aet(n)
     boundary_constraints = get_boundary_constraints(n, result)
     transition_constraints = get_transition_constraints()
 
-    stark_prover = get_test_stark_prover(n)
-    stark_prover.prove(aet, transition_constraints, boundary_constraints)
+    stark_prover, stark_verifier = get_test_stark(n)
+    proof = stark_prover.prove(aet, transition_constraints, boundary_constraints)
+    result = stark_verifier.verify(proof)
+
+    assert result, "invalid proof"

@@ -68,8 +68,8 @@ def get_boundary_constraints(
     assert n > 0, "unable to create boundary constrainst for n < 1"
 
     bc = [
-        BoundaryConstraint(x=0, y=0, value=field(0)),
-        BoundaryConstraint(x=n - 1, y=1, value=field(result)),
+        BoundaryConstraint(i=0, j=0, value=field(0)),
+        BoundaryConstraint(i=n - 1, j=1, value=field(result)),
     ]
 
     return bc
