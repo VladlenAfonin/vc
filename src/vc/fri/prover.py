@@ -43,7 +43,12 @@ class FriProver:
         merkle_roots: typing.List[bytes]
         """Merkle root of current evaluations."""
 
-        def __init__(self, f: galois.Poly, options: FriParameters) -> None:
+        def __init__(
+            self,
+            f: galois.Poly,
+            options: FriParameters,
+            sponge: Sponge | None = None,
+        ) -> None:
             # coefficients_length = f.degree + 1
             # assert is_pow2(
             #     coefficients_length
@@ -55,7 +60,7 @@ class FriProver:
             self.omega = options.omega
             self.offset = options.offset
             self.evaluation_domain = options.initial_evaluation_domain
-            self.sponge = Sponge(field)
+            self.sponge = Sponge(field) if sponge is None else sponge
             self.merkle_trees = []
             self.merkle_roots = []
             self.evaluations = []
@@ -77,13 +82,13 @@ class FriProver:
         self._state = None
 
     @logging_mark(logger)
-    def prove(self, f: galois.Poly) -> FriProof:
+    def prove(self, f: galois.Poly, sponge: Sponge | None = None) -> FriProof:
         """Prover that polynomial f is close to RS-code.
 
         :param f: Polynomial to be proven.
         """
 
-        self._state = FriProver.State(f, self._parameters)
+        self._state = FriProver.State(f, self._parameters, sponge)
 
         initial_round_evaluations: galois.FieldArray = self._state.polynomial(
             self._state.evaluation_domain

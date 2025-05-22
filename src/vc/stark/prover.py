@@ -1,4 +1,5 @@
 import dataclasses
+from itertools import chain
 import logging
 import typing
 
@@ -6,12 +7,15 @@ import galois
 
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
+from vc.fri.fold import stack
+from vc.sponge import Sponge
 from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
 from vc.stark.proof import StarkProof
 from vc.stark.parameters import StarkParameters
 from vc.fri.prover import FriProver
 from vc.constants import FIELD_GOLDILOCKS
+from vc.merkle import MerkleTree
 
 
 field = FIELD_GOLDILOCKS
@@ -46,13 +50,12 @@ class StarkProver:
         transition_constraints: typing.List[MPoly],
         boundary_constraints: typing.List[BoundaryConstraint],
     ) -> StarkProof:
+        sponge = Sponge(self.fri_parameters.field)
+
         trace_polynomials = self.get_trace_polynomials(aet)
         n_registers = len(trace_polynomials)
 
-        boundaries = self.get_boundary_polynomials(
-            n_registers,
-            boundary_constraints,
-        )
+        boundaries = self.get_boundaries(n_registers, boundary_constraints)
         boundary_quotients = [
             (tp - bp) // bz
             for tp, bp, bz in zip(
@@ -61,16 +64,23 @@ class StarkProver:
                 boundaries.zerofiers,
             )
         ]
-        boundary_quotient_proofs = []
+
         for boundary_quotient in boundary_quotients:
-            boundary_quotient_proofs.append(
-                self.fri_prover.prove(boundary_quotient),
+            evaluations = boundary_quotient(
+                self.fri_parameters.initial_evaluation_domain
             )
+            stacked_evaluations = stack(
+                evaluations,
+                self.fri_parameters.folding_factor,
+            )
+            merkle_tree = MerkleTree()
+            merkle_tree.append_bulk(stacked_evaluations)
+            merkle_tree_root = merkle_tree.get_root()
+            sponge.absorb(merkle_tree_root)
 
         scaled_trace_polynomials = [
             scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
         ]
-
         transition_polynomials = [
             tc.evals(trace_polynomials + scaled_trace_polynomials)
             for tc in transition_constraints
@@ -79,24 +89,24 @@ class StarkProver:
         omicron_zerofier = galois.Poly.Roots(
             self.state.omicron_domain[0 : aet.shape[0] - 1]
         )
-        omicron_zerofier_proof = self.fri_prover.prove(omicron_zerofier)
 
         # INFO: Transition polynomials are expected to equal 0 at omicron
         #       domain, so we only need to divide out the zerofier.
         transition_quotients = [tp // omicron_zerofier for tp in transition_polynomials]
-        transition_quotient_proofs = []
-        for transition_quotient in transition_quotients:
-            transition_quotient_proofs.append(
-                self.fri_prover.prove(transition_quotient),
-            )
 
-        return StarkProof(
-            omicron_zerofier_proof=omicron_zerofier_proof,
-            boundary_quotient_proofs=boundary_quotient_proofs,
-            transition_quotient_proofs=transition_quotient_proofs,
-        )
+        n_weights = len(transition_quotients) + len(boundary_quotients)
+        weights = [sponge.squeeze_field_element() for _ in range(n_weights)]
 
-    def get_boundary_polynomials(
+        # TODO: Verify that this works properly.
+        _ = boundary_quotients[0] * weights[0]
+
+        # INFO: This does not work.
+        # commited_polynomials = chain(transition_quotients, boundary_quotients)
+        # combination_polynomial = sum(
+        #     p * w for p, w in zip(commited_polynomials, weights)
+        # )
+
+    def get_boundaries(
         self,
         n_registers: int,
         boundary_constraints: typing.List[BoundaryConstraint],
