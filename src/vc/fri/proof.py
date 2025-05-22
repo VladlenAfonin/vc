@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 class RoundProof:
     stacked_evaluations: galois.FieldArray | galois.Array | numpy.ndarray
     proofs: typing.List[pymerkle.MerkleProof]
+    indices: numpy.ndarray
 
 
 @dataclasses.dataclass(slots=True)

@@ -109,14 +109,17 @@ class FriParameters:
 
     @staticmethod
     def _get_number_of_repetitions(
-        security_level_bits: int, expansion_factor_log: int
+        security_level_bits: int,
+        expansion_factor_log: int,
     ) -> int:
         quotient = security_level_bits / expansion_factor_log
         return math.ceil(quotient)
 
     @staticmethod
     def _get_number_of_rounds(
-        initial_coefficients_length, final_coefficients_length, folding_factor
+        initial_coefficients_length,
+        final_coefficients_length,
+        folding_factor,
     ) -> int:
         assert is_pow2(
             initial_coefficients_length

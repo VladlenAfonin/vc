@@ -9,7 +9,7 @@ import galois
 from vc.fri.fold import fold_domain, fold_indices, fold_polynomial, stack
 from vc.fri.proof import FriProof, RoundProof
 from vc.logging import current_value, logging_mark
-from vc.polynomial import expand_ext, expand_to_nearest_power_of_two2_ext
+from vc.polynomial import expand_ext
 from vc.sponge import Sponge
 from vc.merkle import MerkleTree
 from vc.fri.parameters import FriParameters
@@ -125,7 +125,8 @@ class FriProver:
         for i in range(self._parameters.number_of_rounds):
             self._round()
 
-        # This is moved here so that Verifier and Prover both access the Sponge in the same order.
+        # INFO: This is moved here so that Verifier and Prover
+        #       both access the Sponge in the same order.
         final_randomness = self._state.sponge.squeeze_field_element()
 
         round_proofs: typing.List[RoundProof] = []
@@ -134,6 +135,8 @@ class FriProver:
             self._parameters.initial_evaluation_domain_length
             // self._parameters.folding_factor
         )
+
+        # INFO: This are the indices we need for STARK verification.
         query_indices = self._state.sponge.squeeze_indices(
             self._parameters.number_of_repetitions,
             query_indices_range,
@@ -141,7 +144,7 @@ class FriProver:
         query_evaluations = self._state.evaluations[0][query_indices]
 
         merkle_proofs = self._state.merkle_trees[0].prove_bulk(query_indices)
-        round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
+        round_proofs.append(RoundProof(query_evaluations, merkle_proofs, query_indices))
 
         for i in range(self._parameters.number_of_rounds):
             query_indices_range //= self._parameters.folding_factor
@@ -149,7 +152,9 @@ class FriProver:
             query_evaluations = self._state.evaluations[i + 1][query_indices]
 
             merkle_proofs = self._state.merkle_trees[i + 1].prove_bulk(query_indices)
-            round_proofs.append(RoundProof(query_evaluations, merkle_proofs))
+            round_proofs.append(
+                RoundProof(query_evaluations, merkle_proofs, query_indices)
+            )
 
         # The final polynomial does not need any proofs.
         final_polynomial = fold_polynomial(
