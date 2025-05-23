@@ -1,7 +1,7 @@
 import dataclasses
-from itertools import chain
 import logging
 import typing
+import functools
 
 import galois
 
@@ -16,6 +16,7 @@ from vc.stark.parameters import StarkParameters
 from vc.fri.prover import FriProver
 from vc.constants import FIELD_GOLDILOCKS
 from vc.merkle import MerkleTree
+from vc.logging import logging_mark
 
 
 field = FIELD_GOLDILOCKS
@@ -44,6 +45,7 @@ class StarkProver:
     fri_prover: FriProver
     state: StarkProverState
 
+    @logging_mark(logger)
     def prove(
         self,
         aet: galois.FieldArray,
@@ -94,17 +96,17 @@ class StarkProver:
         #       domain, so we only need to divide out the zerofier.
         transition_quotients = [tp // omicron_zerofier for tp in transition_polynomials]
 
-        n_weights = len(transition_quotients) + len(boundary_quotients)
+        commited_polynomials = transition_quotients + boundary_quotients
+        n_weights = len(commited_polynomials)
         weights = [sponge.squeeze_field_element() for _ in range(n_weights)]
 
-        # TODO: Verify that this works properly.
-        _ = boundary_quotients[0] * weights[0]
+        combination_polynomial = functools.reduce(
+            lambda x, y: x + y,
+            (p * w for p, w in zip(commited_polynomials, weights)),
+            galois.Poly.Zero(field=self.fri_parameters.field),
+        )
 
-        # INFO: This does not work.
-        # commited_polynomials = chain(transition_quotients, boundary_quotients)
-        # combination_polynomial = sum(
-        #     p * w for p, w in zip(commited_polynomials, weights)
-        # )
+        fri_proof = self.fri_prover.prove(combination_polynomial)
 
     def get_boundaries(
         self,
