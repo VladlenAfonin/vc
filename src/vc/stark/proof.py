@@ -1,11 +1,12 @@
 import dataclasses
 import typing
 
+import pymerkle
+
 from vc.fri.proof import FriProof
 
 
 @dataclasses.dataclass(slots=True)
 class StarkProof:
-    omicron_zerofier_proof: FriProof
-    boundary_quotient_proofs: typing.List[FriProof]
-    transition_quotient_proofs: typing.List[FriProof]
+    combination_polynomial_proof: FriProof
+    boundary_quotient_proofs: typing.List[typing.List[pymerkle.MerkleProof]]

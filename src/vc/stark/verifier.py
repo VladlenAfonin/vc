@@ -24,20 +24,8 @@ class StarkVerifier:
 
     @logging_mark(logger)
     def verify(self, proof: StarkProof) -> bool:
-        if not all(
-            self.state.fri_verifier.verify(x) for x in proof.boundary_quotient_proofs
-        ):
-            logger.error("invalid boundary quotient proof")
-            return False
-
-        if not all(
-            self.state.fri_verifier.verify(x) for x in proof.transition_quotient_proofs
-        ):
-            logger.error("invalid transition quotient proof")
-            return False
-
-        if not self.state.fri_verifier.verify(proof.omicron_zerofier_proof):
-            logger.error("invalid omicron zerofier proof")
+        if not self.state.fri_verifier.verify(proof.combination_polynomial_proof):
+            logger.error("invalid combination polynomial proof")
             return False
 
         # INFO: Check consistency.

@@ -4,6 +4,7 @@ import typing
 import functools
 
 import galois
+import pymerkle
 
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
@@ -67,6 +68,7 @@ class StarkProver:
             )
         ]
 
+        boundary_quotient_merkle_trees: typing.List[MerkleTree] = []
         for boundary_quotient in boundary_quotients:
             evaluations = boundary_quotient(
                 self.fri_parameters.initial_evaluation_domain
@@ -79,6 +81,8 @@ class StarkProver:
             merkle_tree.append_bulk(stacked_evaluations)
             merkle_tree_root = merkle_tree.get_root()
             sponge.absorb(merkle_tree_root)
+
+            boundary_quotient_merkle_trees.append(merkle_tree)
 
         scaled_trace_polynomials = [
             scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
@@ -107,6 +111,17 @@ class StarkProver:
         )
 
         fri_proof = self.fri_prover.prove(combination_polynomial)
+        indices_to_prove = fri_proof.round_proofs[0].indices
+
+        boundary_merkle_proofs: typing.List[typing.List[pymerkle.MerkleProof]] = []
+        for merkle_tree in boundary_quotient_merkle_trees:
+            proofs = merkle_tree.prove_bulk(indices_to_prove)
+            boundary_merkle_proofs.append(proofs)
+
+        return StarkProof(
+            combination_polynomial_proof=fri_proof,
+            boundary_quotient_proofs=boundary_merkle_proofs,
+        )
 
     def get_boundaries(
         self,
