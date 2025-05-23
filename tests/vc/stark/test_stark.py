@@ -94,7 +94,15 @@ def test_stark(n: int):
     transition_constraints = get_transition_constraints()
 
     stark_prover, stark_verifier = get_test_stark(n)
-    proof = stark_prover.prove(aet, transition_constraints, boundary_constraints)
-    result = stark_verifier.verify(proof)
+    proof = stark_prover.prove(
+        aet,
+        transition_constraints,
+        boundary_constraints,
+    )
+    result = stark_verifier.verify(
+        proof,
+        transition_constraints,
+        boundary_constraints,
+    )
 
     assert result, "invalid proof"

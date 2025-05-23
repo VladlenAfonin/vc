@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class FriVerifier:
     """FRI Verifier."""
 
-    @dataclasses.dataclass(slots=True)
+    @dataclasses.dataclass(slots=True, init=False)
     class State:
         """FRI Verifier state."""
 
@@ -31,23 +31,22 @@ class FriVerifier:
         initial_evaluation_domain: galois.Array
         """Initial evaluation domain."""
 
-        def reset(self) -> None:
-            self.sponge.reset()
+        def __init__(
+            self,
+            fri_parameters: FriParameters,
+            sponge: Sponge | None = None,
+        ) -> None:
+            self.initial_evaluation_domain = fri_parameters.initial_evaluation_domain
+            self.sponge = sponge if sponge is not None else Sponge(fri_parameters.field)
 
-    _parameters: FriParameters
+    _fri_parameters: FriParameters
     _state: FriVerifier.State
 
     def __init__(self, parameters: FriParameters) -> None:
-        sponge = Sponge(parameters.field)
-
-        self._parameters = parameters
-        self._state = FriVerifier.State(
-            sponge=sponge,
-            initial_evaluation_domain=parameters.initial_evaluation_domain,
-        )
+        self._fri_parameters = parameters
 
     @logging_mark(logger)
-    def verify(self, proof: FriProof) -> bool:
+    def verify(self, proof: FriProof, sponge: Sponge | None = None) -> bool:
         """Verify proof.
 
         :param proof: Proof for some polynomial.
@@ -56,11 +55,14 @@ class FriVerifier:
         :rtype: bool
         """
 
-        self._state.reset()
+        self._state = FriVerifier.State(
+            self._fri_parameters,
+            sponge=sponge,
+        )
 
         if (
             proof.final_polynomial.degree + 1
-            > self._parameters.final_coefficients_length
+            > self._fri_parameters.final_coefficients_length
         ):
             logger.error(f"invalid final polynomial degree")
             return False
@@ -75,7 +77,7 @@ class FriVerifier:
                 return False
 
         folding_randomness_array: typing.List[galois.Array] = []
-        for i in range(self._parameters.number_of_rounds + 1):
+        for i in range(self._fri_parameters.number_of_rounds + 1):
             self._state.sponge.absorb(proof.merkle_roots[i])
             if i == 0:
                 # This is done only for synchronization between the Prover and the Verifier.
@@ -84,21 +86,21 @@ class FriVerifier:
 
             folding_randomness_array.append(self._state.sponge.squeeze_field_element())
 
-        evaluation_domain = self._parameters.initial_evaluation_domain
-        evaluation_domain_length = self._parameters.initial_evaluation_domain_length
+        evaluation_domain = self._fri_parameters.initial_evaluation_domain
+        evaluation_domain_length = self._fri_parameters.initial_evaluation_domain_length
 
         query_indices_range = (
-            self._parameters.initial_evaluation_domain_length
-            // self._parameters.folding_factor
+            self._fri_parameters.initial_evaluation_domain_length
+            // self._fri_parameters.folding_factor
         )
         query_indices = self._state.sponge.squeeze_indices(
-            self._parameters.number_of_repetitions,
+            self._fri_parameters.number_of_repetitions,
             query_indices_range,
         )
         extended_indices = extend_indices(
             query_indices,
             evaluation_domain_length,
-            self._parameters.folding_factor,
+            self._fri_parameters.folding_factor,
         )
 
         # BEGIN FIRST CHECK --------------------
@@ -115,23 +117,23 @@ class FriVerifier:
                 folded_polynomial(folding_randomness_array[0]),
             )
 
-        query_indices_range //= self._parameters.folding_factor
+        query_indices_range //= self._fri_parameters.folding_factor
         query_indices, check_indices, folded_values = fold_sort_generate(
             query_indices,
             query_indices_range,
             unordered_folded_values,
         )
 
-        evaluation_domain_length //= self._parameters.folding_factor
+        evaluation_domain_length //= self._fri_parameters.folding_factor
         evaluation_domain = fold_domain(
             evaluation_domain,
-            self._parameters.folding_factor,
+            self._fri_parameters.folding_factor,
         )
 
         extended_indices = extend_indices(
             query_indices,
             evaluation_domain_length,
-            self._parameters.folding_factor,
+            self._fri_parameters.folding_factor,
         )
 
         for j, se in enumerate(proof.round_proofs[1].stacked_evaluations):
@@ -144,7 +146,7 @@ class FriVerifier:
         # unordered_folded_values = None
         # check_indices = None
         # folded_values = None
-        for i in range(1, self._parameters.number_of_rounds + 1):
+        for i in range(1, self._fri_parameters.number_of_rounds + 1):
             if check_indices is not None:
                 assert folded_values is not None
 
@@ -165,23 +167,23 @@ class FriVerifier:
                     folded_polynomial(folding_randomness_array[i]),
                 )
 
-            query_indices_range //= self._parameters.folding_factor
+            query_indices_range //= self._fri_parameters.folding_factor
             query_indices, check_indices, folded_values = fold_sort_generate(
                 query_indices,
                 query_indices_range,
                 unordered_folded_values,
             )
 
-            evaluation_domain_length //= self._parameters.folding_factor
+            evaluation_domain_length //= self._fri_parameters.folding_factor
             evaluation_domain = fold_domain(
                 evaluation_domain,
-                self._parameters.folding_factor,
+                self._fri_parameters.folding_factor,
             )
 
             extended_indices = extend_indices(
                 query_indices,
                 evaluation_domain_length,
-                self._parameters.folding_factor,
+                self._fri_parameters.folding_factor,
             )
 
         # TODO: Refactor without Numpy.

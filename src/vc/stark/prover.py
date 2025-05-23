@@ -68,7 +68,9 @@ class StarkProver:
             )
         ]
 
-        boundary_quotient_merkle_trees: typing.List[MerkleTree] = []
+        bq_merkle_trees: typing.List[MerkleTree] = []
+        bq_merkle_roots: typing.List[bytes] = []
+        bq_stacked_evaluations: typing.List[galois.FieldArray] = []
         for boundary_quotient in boundary_quotients:
             evaluations = boundary_quotient(
                 self.fri_parameters.initial_evaluation_domain
@@ -79,10 +81,12 @@ class StarkProver:
             )
             merkle_tree = MerkleTree()
             merkle_tree.append_bulk(stacked_evaluations)
-            merkle_tree_root = merkle_tree.get_root()
-            sponge.absorb(merkle_tree_root)
+            merkle_root = merkle_tree.get_root()
+            sponge.absorb(merkle_root)
 
-            boundary_quotient_merkle_trees.append(merkle_tree)
+            bq_merkle_trees.append(merkle_tree)
+            bq_merkle_roots.append(merkle_root)
+            bq_stacked_evaluations.append(stacked_evaluations)
 
         scaled_trace_polynomials = [
             scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
@@ -103,24 +107,29 @@ class StarkProver:
         commited_polynomials = transition_quotients + boundary_quotients
         n_weights = len(commited_polynomials)
         weights = [sponge.squeeze_field_element() for _ in range(n_weights)]
-
         combination_polynomial = functools.reduce(
             lambda x, y: x + y,
             (p * w for p, w in zip(commited_polynomials, weights)),
             galois.Poly.Zero(field=self.fri_parameters.field),
         )
 
-        fri_proof = self.fri_prover.prove(combination_polynomial)
+        fri_proof = self.fri_prover.prove(combination_polynomial, sponge)
         indices_to_prove = fri_proof.round_proofs[0].indices
 
-        boundary_merkle_proofs: typing.List[typing.List[pymerkle.MerkleProof]] = []
-        for merkle_tree in boundary_quotient_merkle_trees:
+        bq_merkle_proofs_chosen: typing.List[typing.List[pymerkle.MerkleProof]] = []
+        bq_stacked_evaluations_chosen: typing.List[galois.FieldArray] = []
+        for i, merkle_tree in enumerate(bq_merkle_trees):
             proofs = merkle_tree.prove_bulk(indices_to_prove)
-            boundary_merkle_proofs.append(proofs)
+            bq_merkle_proofs_chosen.append(proofs)
+            bq_stacked_evaluations_chosen.append(
+                bq_stacked_evaluations[i][indices_to_prove]
+            )
 
         return StarkProof(
             combination_polynomial_proof=fri_proof,
-            boundary_quotient_proofs=boundary_merkle_proofs,
+            bq_merkle_proofs=bq_merkle_proofs_chosen,
+            bq_merkle_roots=bq_merkle_roots,
+            bq_stacked_evaluations=bq_stacked_evaluations_chosen,
         )
 
     def get_boundaries(
