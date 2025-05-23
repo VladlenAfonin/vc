@@ -152,7 +152,7 @@ class StarkProver:
                 [bc.value for bc in current_boundary_constraints]
             )
 
-            zerofiers.append(galois.Poly.Roots(xs))
+            zerofiers.append(galois.Poly.Roots(xs, field=self.fri_parameters.field))
             polynomials.append(galois.lagrange_poly(xs, ys))
 
         return Boundaries(

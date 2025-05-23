@@ -103,6 +103,10 @@ def test_stark(n: int):
         proof,
         transition_constraints,
         boundary_constraints,
+        aet.shape[1],
     )
 
     assert result, "invalid proof"
+
+
+def test_boundary_zerofiers(): ...

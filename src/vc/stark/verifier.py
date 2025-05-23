@@ -33,6 +33,7 @@ class StarkVerifier:
         proof: StarkProof,
         transition_constraints: typing.List[MPoly],
         boundary_constraints: typing.List[BoundaryConstraint],
+        n_registers: int,
     ) -> bool:
         sponge = Sponge(self.state.fri_parameters.field)
 
@@ -52,8 +53,13 @@ class StarkVerifier:
                 logger.error("invalid merkle proof for boundary quotient")
                 return False
 
-        # ERROR: The second term is not correct. It must be n_unique(bq_js).
-        n_weights = len(transition_constraints) + len(boundary_constraints)
+        # INFO: This also provides the number of boundary quotients.
+        boundary_zerofiers = self.get_boundary_zerofiers(
+            n_registers,
+            boundary_constraints,
+        )
+
+        n_weights = len(transition_constraints) + len(boundary_zerofiers)
         weights = [sponge.squeeze_field_element() for _ in range(n_weights)]
 
         # INFO: Verify FRI proof for the combination polynomial.
@@ -68,3 +74,20 @@ class StarkVerifier:
             pass
 
         return True
+
+    @logging_mark(logger)
+    def get_boundary_zerofiers(
+        self,
+        n_registers,
+        boundary_constraints: typing.List[BoundaryConstraint],
+    ) -> typing.List[galois.Poly]:
+        zerofiers = []
+        for j in range(n_registers):
+            current_boundary_constraints = [x for x in boundary_constraints if x.j == j]
+
+            xs = [self.state.omicron**x.i for x in current_boundary_constraints]
+
+            zerofier = galois.Poly.Roots(xs, field=self.state.fri_parameters.field)
+            zerofiers.append(zerofier)
+
+        return zerofiers
