@@ -3,11 +3,13 @@ import logging
 import typing
 
 import galois
+import numpy
 
+from vc.fri.fold import extend_indices, stack
 from vc.merkle import MerkleTree
 from vc.polynomial import MPoly
 from vc.sponge import Sponge
-from vc.stark.boundary import BoundaryConstraint
+from vc.stark.boundary import Boundaries, BoundaryConstraint
 from vc.stark.proof import StarkProof
 from vc.fri.verifier import FriVerifier
 from vc.fri.parameters import FriParameters
@@ -54,12 +56,12 @@ class StarkVerifier:
                 return False
 
         # INFO: This also provides the number of boundary quotients.
-        boundary_zerofiers = self.get_boundary_zerofiers(
+        boundaries = self.get_boundaries(
             n_registers,
             boundary_constraints,
         )
 
-        n_weights = len(transition_constraints) + len(boundary_zerofiers)
+        n_weights = len(transition_constraints) + len(boundaries.zerofiers)
         weights = [sponge.squeeze_field_element() for _ in range(n_weights)]
 
         # INFO: Verify FRI proof for the combination polynomial.
@@ -70,8 +72,26 @@ class StarkVerifier:
             logger.error("invalid combination polynomial proof")
             return False
 
-        for bq_stacked_evaluations in proof.bq_stacked_evaluations:
-            pass
+        extended_indices = extend_indices(
+            proof.combination_polynomial_proof.round_proofs[0].indices,
+            self.state.fri_parameters.initial_coefficients_length
+            // self.state.fri_parameters.folding_factor,
+            self.state.fri_parameters.folding_factor,
+        )
+
+        extended_xs = stack(
+            self.state.fri_parameters.initial_evaluation_domain[extended_indices],
+            self.state.fri_parameters.folding_factor,
+        )
+
+        for bq_stacked_evaluations, bz, bp in zip(
+            proof.bq_stacked_evaluations,
+            boundaries.zerofiers,
+            boundaries.polynomials,
+        ):
+            trace_polynomial_stacked_evaluations = bq_stacked_evaluations * bz(
+                extended_xs
+            ) + bp(extended_xs)
 
         return True
 
@@ -91,3 +111,35 @@ class StarkVerifier:
             zerofiers.append(zerofier)
 
         return zerofiers
+
+    @logging_mark(logger)
+    def get_boundaries(
+        self,
+        n_registers: int,
+        boundary_constraints: typing.List[BoundaryConstraint],
+    ) -> Boundaries:
+        polynomials = []
+        zerofiers = []
+
+        for j in range(n_registers):
+            current_boundary_constraints = [
+                bc for bc in boundary_constraints if bc.j == j
+            ]
+
+            xs = self.state.fri_parameters.field(
+                [self.state.omicron**x.i for x in current_boundary_constraints]
+            )
+            ys = self.state.fri_parameters.field(
+                [bc.value for bc in current_boundary_constraints]
+            )
+
+            zerofiers.append(
+                galois.Poly.Roots(xs, field=self.state.fri_parameters.field)
+            )
+            polynomials.append(galois.lagrange_poly(xs, ys))
+
+        return Boundaries(
+            constraints=boundary_constraints,
+            polynomials=polynomials,
+            zerofiers=zerofiers,
+        )

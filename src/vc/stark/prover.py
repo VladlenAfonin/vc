@@ -68,6 +68,7 @@ class StarkProver:
             )
         ]
 
+        # TODO: These should all be in the same object.
         bq_merkle_trees: typing.List[MerkleTree] = []
         bq_merkle_roots: typing.List[bytes] = []
         bq_stacked_evaluations: typing.List[galois.FieldArray] = []
