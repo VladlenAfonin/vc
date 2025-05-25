@@ -3,7 +3,6 @@ import logging
 import typing
 
 import galois
-import numpy
 
 from vc.fri.fold import extend_indices, stack
 from vc.merkle import MerkleTree
@@ -39,11 +38,29 @@ class StarkVerifier:
     ) -> bool:
         sponge = Sponge(self.state.fri_parameters.field)
 
+        # TODO: Refactor, move out to a function.
         # INFO: Verify boundary quotient openings.
         for stacked_evaluations, merkle_proofs, merkle_root in zip(
-            proof.bq_stacked_evaluations,
-            proof.bq_merkle_proofs,
-            proof.bq_merkle_roots,
+            proof.bq_current.stacked_evaluations,
+            proof.bq_current.merkle_proofs,
+            proof.bq_current.merkle_roots,
+        ):
+            merkle_verification_result = MerkleTree.verify_bulk(
+                stacked_evaluations,
+                merkle_root,
+                merkle_proofs,
+            )
+            sponge.absorb(merkle_root)
+            if not merkle_verification_result:
+                logger.error("invalid merkle proof for boundary quotient")
+                return False
+
+        # TODO: Refactor, move out to a function.
+        # INFO: Verify boundary quotient openings.
+        for stacked_evaluations, merkle_proofs, merkle_root in zip(
+            proof.bq_next.stacked_evaluations,
+            proof.bq_next.merkle_proofs,
+            proof.bq_next.merkle_roots,
         ):
             merkle_verification_result = MerkleTree.verify_bulk(
                 stacked_evaluations,
@@ -79,19 +96,45 @@ class StarkVerifier:
             self.state.fri_parameters.folding_factor,
         )
 
-        extended_xs = stack(
+        extended_xs_current = stack(
             self.state.fri_parameters.initial_evaluation_domain[extended_indices],
             self.state.fri_parameters.folding_factor,
         )
 
-        for bq_stacked_evaluations, bz, bp in zip(
-            proof.bq_stacked_evaluations,
+        extended_xs_next = stack(
+            self.state.fri_parameters.initial_evaluation_domain[extended_indices]
+            * self.state.omicron,
+            self.state.fri_parameters.folding_factor,
+        )
+
+        tracep_se_current: typing.List[galois.FieldArray] = []
+        tracep_se_next: typing.List[galois.FieldArray] = []
+        for bq_se_current, bq_se_next, bz, bp in zip(
+            proof.bq_current.stacked_evaluations,
+            proof.bq_next.stacked_evaluations,
             boundaries.zerofiers,
             boundaries.polynomials,
         ):
-            trace_polynomial_stacked_evaluations = bq_stacked_evaluations * bz(
-                extended_xs
-            ) + bp(extended_xs)
+            tracep_se_current.append(
+                bq_se_current * bz(extended_xs_current) + bp(extended_xs_current)
+            )
+            tracep_se_next.append(
+                bq_se_next * bz(extended_xs_next) + bp(extended_xs_next)
+            )
+
+        points = tracep_se_current + tracep_se_next
+        for i in range(tracep_se_current[0].shape[0]):
+            for j in range(tracep_se_current[0].shape[1]):
+                point = []
+                for s in range(2 * n_registers):
+                    point.append(points[s][i][j])
+
+                print(point)
+
+                for tc in transition_constraints:
+                    tc.eval(self.state.fri_parameters.field(point))
+                break
+            break
 
         return True
 

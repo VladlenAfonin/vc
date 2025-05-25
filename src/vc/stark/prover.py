@@ -12,7 +12,7 @@ from vc.fri.fold import stack
 from vc.sponge import Sponge
 from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
-from vc.stark.proof import StarkProof
+from vc.stark.proof import BoundaryQuotientProof, StarkProof
 from vc.stark.parameters import StarkParameters
 from vc.fri.prover import FriProver
 from vc.constants import FIELD_GOLDILOCKS
@@ -69,9 +69,9 @@ class StarkProver:
         ]
 
         # TODO: These should all be in the same object.
-        bq_merkle_trees: typing.List[MerkleTree] = []
-        bq_merkle_roots: typing.List[bytes] = []
-        bq_stacked_evaluations: typing.List[galois.FieldArray] = []
+        bq_merkle_trees_current: typing.List[MerkleTree] = []
+        bq_merkle_roots_current: typing.List[bytes] = []
+        bq_stacked_evaluations_current: typing.List[galois.FieldArray] = []
         for boundary_quotient in boundary_quotients:
             evaluations = boundary_quotient(
                 self.fri_parameters.initial_evaluation_domain
@@ -80,14 +80,39 @@ class StarkProver:
                 evaluations,
                 self.fri_parameters.folding_factor,
             )
+
             merkle_tree = MerkleTree()
             merkle_tree.append_bulk(stacked_evaluations)
             merkle_root = merkle_tree.get_root()
             sponge.absorb(merkle_root)
 
-            bq_merkle_trees.append(merkle_tree)
-            bq_merkle_roots.append(merkle_root)
-            bq_stacked_evaluations.append(stacked_evaluations)
+            bq_merkle_trees_current.append(merkle_tree)
+            bq_merkle_roots_current.append(merkle_root)
+            bq_stacked_evaluations_current.append(stacked_evaluations)
+
+        # TODO: Refactor, move out to a function.
+        # INFO: Next evaluations.
+        bq_merkle_trees_next: typing.List[MerkleTree] = []
+        bq_merkle_roots_next: typing.List[bytes] = []
+        bq_stacked_evaluations_next: typing.List[galois.FieldArray] = []
+        for boundary_quotient in boundary_quotients:
+            evaluations = boundary_quotient(
+                self.fri_parameters.initial_evaluation_domain
+                * self.stark_parameters.omicron
+            )
+            stacked_evaluations = stack(
+                evaluations,
+                self.fri_parameters.folding_factor,
+            )
+
+            merkle_tree = MerkleTree()
+            merkle_tree.append_bulk(stacked_evaluations)
+            merkle_root = merkle_tree.get_root()
+            sponge.absorb(merkle_root)
+
+            bq_merkle_trees_next.append(merkle_tree)
+            bq_merkle_roots_next.append(merkle_root)
+            bq_stacked_evaluations_next.append(stacked_evaluations)
 
         scaled_trace_polynomials = [
             scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
@@ -119,18 +144,37 @@ class StarkProver:
 
         bq_merkle_proofs_chosen: typing.List[typing.List[pymerkle.MerkleProof]] = []
         bq_stacked_evaluations_chosen: typing.List[galois.FieldArray] = []
-        for i, merkle_tree in enumerate(bq_merkle_trees):
+        for i, merkle_tree in enumerate(bq_merkle_trees_current):
             proofs = merkle_tree.prove_bulk(indices_to_prove)
             bq_merkle_proofs_chosen.append(proofs)
             bq_stacked_evaluations_chosen.append(
-                bq_stacked_evaluations[i][indices_to_prove]
+                bq_stacked_evaluations_current[i][indices_to_prove]
+            )
+
+        # TODO: Refactor, move out to a function.
+        bq_merkle_proofs_chosen_next: typing.List[typing.List[pymerkle.MerkleProof]] = (
+            []
+        )
+        bq_stacked_evaluations_chosen_next: typing.List[galois.FieldArray] = []
+        for i, merkle_tree in enumerate(bq_merkle_trees_next):
+            proofs = merkle_tree.prove_bulk(indices_to_prove)
+            bq_merkle_proofs_chosen_next.append(proofs)
+            bq_stacked_evaluations_chosen_next.append(
+                bq_stacked_evaluations_next[i][indices_to_prove]
             )
 
         return StarkProof(
             combination_polynomial_proof=fri_proof,
-            bq_merkle_proofs=bq_merkle_proofs_chosen,
-            bq_merkle_roots=bq_merkle_roots,
-            bq_stacked_evaluations=bq_stacked_evaluations_chosen,
+            bq_current=BoundaryQuotientProof(
+                merkle_proofs=bq_merkle_proofs_chosen,
+                merkle_roots=bq_merkle_roots_current,
+                stacked_evaluations=bq_stacked_evaluations_chosen,
+            ),
+            bq_next=BoundaryQuotientProof(
+                merkle_proofs=bq_merkle_proofs_chosen_next,
+                merkle_roots=bq_merkle_roots_next,
+                stacked_evaluations=bq_stacked_evaluations_chosen_next,
+            ),
         )
 
     def get_boundaries(
