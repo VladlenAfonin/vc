@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import logging
 import typing
 
@@ -91,30 +92,18 @@ class StarkVerifier:
             logger.error("invalid combination polynomial proof")
             return False
 
+        # print(proof.combination_polynomial_proof.round_proofs[0].indices)
         extended_indices = extend_indices(
             proof.combination_polynomial_proof.round_proofs[0].indices,
-            self.state.fri_parameters.initial_coefficients_length
+            self.state.fri_parameters.initial_evaluation_domain_length
             // self.state.fri_parameters.folding_factor,
             self.state.fri_parameters.folding_factor,
         )
 
-        extended_xs_current = stack(
+        extended_xs_current = self.state.fri_parameters.field(
             self.state.fri_parameters.initial_evaluation_domain[extended_indices],
-            self.state.fri_parameters.folding_factor,
         )
-
-        extended_xs_next = stack(
-            self.state.fri_parameters.initial_evaluation_domain[extended_indices]
-            * self.state.omicron,
-            self.state.fri_parameters.folding_factor,
-        )
-
-        tracep_se_current: galois.FieldArray = self.state.fri_parameters.field(
-            numpy.empty_like(proof.bq_current.stacked_evaluations[0])
-        )
-        tracep_se_next: galois.FieldArray = self.state.fri_parameters.field(
-            numpy.empty_like(proof.bq_current.stacked_evaluations[0])
-        )
+        extended_xs_next = extended_xs_current * self.state.omicron
 
         tracep_se_current = self.state.fri_parameters.field(
             numpy.stack(
@@ -129,6 +118,9 @@ class StarkVerifier:
                 axis=2,
             )
         )
+
+        print(tracep_se_current[:, :, 0])
+
         tracep_se_next = self.state.fri_parameters.field(
             numpy.stack(
                 [
@@ -148,13 +140,30 @@ class StarkVerifier:
         )
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
-        tc_se = [
+        tq_ses = [
             tc.evalv(points) // omicron_zerofier(extended_xs_current)
             for tc in transition_constraints
         ]
-        print(tc_se)
+
+        commited_evaluations = [tq for tq in tq_ses] + [
+            bc for bc in proof.bq_current.stacked_evaluations
+        ]
+
+        combination_evaluations = functools.reduce(
+            lambda x, y: x + y,
+            (p * w for p, w in zip(commited_evaluations, weights)),
+            self.state.fri_parameters.field(0),
+        )
+
+        # print(combination_evaluations)
+        # print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
 
         return True
+
+        # return (
+        #     combination_evaluations
+        #     == proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations
+        # )
 
     @logging_mark(logger)
     def get_boundary_zerofiers(

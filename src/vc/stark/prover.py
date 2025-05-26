@@ -8,7 +8,7 @@ import pymerkle
 
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
-from vc.fri.fold import stack
+from vc.fri.fold import extend_indices, stack
 from vc.sponge import Sponge
 from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
@@ -56,6 +56,7 @@ class StarkProver:
         sponge = Sponge(self.fri_parameters.field)
 
         trace_polynomials = self.get_trace_polynomials(aet)
+
         n_registers = len(trace_polynomials)
 
         boundaries = self.get_boundaries(n_registers, boundary_constraints)
@@ -123,7 +124,8 @@ class StarkProver:
         ]
 
         omicron_zerofier = galois.Poly.Roots(
-            self.state.omicron_domain[0 : aet.shape[0] - 1]
+            self.state.omicron_domain[0 : aet.shape[0] - 1],
+            field=self.fri_parameters.field,
         )
 
         # INFO: Transition polynomials are expected to equal 0 at omicron
@@ -141,6 +143,15 @@ class StarkProver:
 
         fri_proof = self.fri_prover.prove(combination_polynomial, sponge)
         indices_to_prove = fri_proof.round_proofs[0].indices
+
+        # extended_indices = extend_indices(
+        #     indices_to_prove,
+        #     self.fri_parameters.initial_evaluation_domain_length
+        #     // self.fri_parameters.folding_factor,
+        #     self.fri_parameters.folding_factor,
+        # )
+        # print(extended_indices)
+        # print(self.fri_parameters.initial_evaluation_domain[extended_indices])
 
         bq_merkle_proofs_chosen: typing.List[typing.List[pymerkle.MerkleProof]] = []
         bq_stacked_evaluations_chosen: typing.List[galois.FieldArray] = []
@@ -162,6 +173,20 @@ class StarkProver:
             bq_stacked_evaluations_chosen_next.append(
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
+
+        print(
+            trace_polynomials[0](
+                self.fri_parameters.field(
+                    [
+                        [10376293537166655489, 28672],
+                        [1970324836974592, 18446744069414584314],
+                        [18446744061898391553, 18446251488205455361],
+                        [18446743107341910241, 14680064],
+                        [18446744009285042177, 18442803419741552641],
+                    ]
+                )
+            )
+        )
 
         return StarkProof(
             combination_polynomial_proof=fri_proof,
