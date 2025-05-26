@@ -3,6 +3,7 @@ import logging
 import typing
 
 import galois
+import numpy
 
 from vc.fri.fold import extend_indices, stack
 from vc.merkle import MerkleTree
@@ -35,6 +36,7 @@ class StarkVerifier:
         transition_constraints: typing.List[MPoly],
         boundary_constraints: typing.List[BoundaryConstraint],
         n_registers: int,
+        n_rows,
     ) -> bool:
         sponge = Sponge(self.state.fri_parameters.field)
 
@@ -107,34 +109,50 @@ class StarkVerifier:
             self.state.fri_parameters.folding_factor,
         )
 
-        tracep_se_current: typing.List[galois.FieldArray] = []
-        tracep_se_next: typing.List[galois.FieldArray] = []
-        for bq_se_current, bq_se_next, bz, bp in zip(
-            proof.bq_current.stacked_evaluations,
-            proof.bq_next.stacked_evaluations,
-            boundaries.zerofiers,
-            boundaries.polynomials,
-        ):
-            tracep_se_current.append(
-                bq_se_current * bz(extended_xs_current) + bp(extended_xs_current)
+        tracep_se_current: galois.FieldArray = self.state.fri_parameters.field(
+            numpy.empty_like(proof.bq_current.stacked_evaluations[0])
+        )
+        tracep_se_next: galois.FieldArray = self.state.fri_parameters.field(
+            numpy.empty_like(proof.bq_current.stacked_evaluations[0])
+        )
+
+        tracep_se_current = self.state.fri_parameters.field(
+            numpy.stack(
+                [
+                    bq * bz(extended_xs_current) + bp(extended_xs_current)
+                    for bq, bz, bp in zip(
+                        proof.bq_current.stacked_evaluations,
+                        boundaries.zerofiers,
+                        boundaries.polynomials,
+                    )
+                ],
+                axis=2,
             )
-            tracep_se_next.append(
-                bq_se_next * bz(extended_xs_next) + bp(extended_xs_next)
+        )
+        tracep_se_next = self.state.fri_parameters.field(
+            numpy.stack(
+                [
+                    bq * bz(extended_xs_next) + bp(extended_xs_next)
+                    for bq, bz, bp in zip(
+                        proof.bq_next.stacked_evaluations,
+                        boundaries.zerofiers,
+                        boundaries.polynomials,
+                    )
+                ],
+                axis=2,
             )
+        )
 
-        points = tracep_se_current + tracep_se_next
-        for i in range(tracep_se_current[0].shape[0]):
-            for j in range(tracep_se_current[0].shape[1]):
-                point = []
-                for s in range(2 * n_registers):
-                    point.append(points[s][i][j])
+        points = self.state.fri_parameters.field(
+            numpy.concatenate([tracep_se_current, tracep_se_next], axis=2)
+        )
 
-                print(point)
-
-                for tc in transition_constraints:
-                    tc.eval(self.state.fri_parameters.field(point))
-                break
-            break
+        omicron_zerofier = self.get_transition_zerofier(n_rows)
+        tc_se = [
+            tc.evalv(points) // omicron_zerofier(extended_xs_current)
+            for tc in transition_constraints
+        ]
+        print(tc_se)
 
         return True
 
@@ -186,3 +204,9 @@ class StarkVerifier:
             polynomials=polynomials,
             zerofiers=zerofiers,
         )
+
+    def get_transition_zerofier(self, n_rows) -> galois.Poly:
+        field = self.state.fri_parameters.field
+        omicron_domain = field([self.state.omicron**i for i in range(n_rows)])
+
+        return galois.Poly.Roots(omicron_domain, field=field)

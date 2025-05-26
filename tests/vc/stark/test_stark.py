@@ -104,6 +104,7 @@ def test_stark(n: int):
         transition_constraints,
         boundary_constraints,
         aet.shape[1],
+        aet.shape[0],
     )
 
     assert result, "invalid proof"
