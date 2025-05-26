@@ -192,9 +192,7 @@ class MPoly:
         :rtype: galois.FieldArray
         """
 
-        assert point.size == len(
-            next(iter(self.terms.keys()), ())
-        ), "Dimension mismatch"
+        assert point.size == self.n_coeffs, "Dimension mismatch"
 
         result = self.field(0)
         for exp, coeff in self.terms.items():
@@ -204,6 +202,12 @@ class MPoly:
             result += term_value
 
         return result
+
+    def evalv(self, points: galois.FieldArray) -> galois.FieldArray:
+        assert points.shape[-1] == self.n_coeffs
+        return self.field(
+            numpy.apply_along_axis(self.eval, axis=-1, arr=points),
+        )
 
     def evals(self, polys: typing.List[galois.Poly]) -> galois.Poly:
         """
@@ -215,9 +219,7 @@ class MPoly:
         :rtype: galois.Poly
         """
 
-        assert len(polys) == len(
-            next(iter(self.terms.keys()), ())
-        ), "Dimension mismatch"
+        assert len(polys) == self.n_coeffs, "Dimension mismatch"
 
         result_poly = galois.Poly.Zero(self.field)
         for exp, coeff in self.terms.items():
@@ -227,3 +229,7 @@ class MPoly:
             result_poly += term_poly
 
         return result_poly
+
+    @property
+    def n_coeffs(self) -> int:
+        return len(next(iter(self.terms.keys()), ()))

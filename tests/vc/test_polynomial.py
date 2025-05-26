@@ -194,3 +194,7 @@ def test_evaluate_symbolic_mpoly(
     mpoly = MPoly(coeffs, TEST_FIELD)
     result = mpoly.evals(point)
     assert expected == result
+
+
+# def test_evalv_mpoly()
+#     mpoly =
