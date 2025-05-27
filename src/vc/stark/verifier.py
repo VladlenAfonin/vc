@@ -92,11 +92,9 @@ class StarkVerifier:
             logger.error("invalid combination polynomial proof")
             return False
 
-        # print(proof.combination_polynomial_proof.round_proofs[0].indices)
         extended_indices = extend_indices(
             proof.combination_polynomial_proof.round_proofs[0].indices,
-            self.state.fri_parameters.initial_evaluation_domain_length
-            // self.state.fri_parameters.folding_factor,
+            self.state.fri_parameters.initial_evaluation_domain_length,
             self.state.fri_parameters.folding_factor,
         )
 
@@ -118,8 +116,6 @@ class StarkVerifier:
                 axis=2,
             )
         )
-
-        print(tracep_se_current[:, :, 0])
 
         tracep_se_next = self.state.fri_parameters.field(
             numpy.stack(

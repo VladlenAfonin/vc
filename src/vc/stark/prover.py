@@ -144,15 +144,6 @@ class StarkProver:
         fri_proof = self.fri_prover.prove(combination_polynomial, sponge)
         indices_to_prove = fri_proof.round_proofs[0].indices
 
-        # extended_indices = extend_indices(
-        #     indices_to_prove,
-        #     self.fri_parameters.initial_evaluation_domain_length
-        #     // self.fri_parameters.folding_factor,
-        #     self.fri_parameters.folding_factor,
-        # )
-        # print(extended_indices)
-        # print(self.fri_parameters.initial_evaluation_domain[extended_indices])
-
         bq_merkle_proofs_chosen: typing.List[typing.List[pymerkle.MerkleProof]] = []
         bq_stacked_evaluations_chosen: typing.List[galois.FieldArray] = []
         for i, merkle_tree in enumerate(bq_merkle_trees_current):
@@ -174,19 +165,33 @@ class StarkProver:
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
 
-        print(
-            trace_polynomials[0](
-                self.fri_parameters.field(
-                    [
-                        [10376293537166655489, 28672],
-                        [1970324836974592, 18446744069414584314],
-                        [18446744061898391553, 18446251488205455361],
-                        [18446743107341910241, 14680064],
-                        [18446744009285042177, 18442803419741552641],
-                    ]
-                )
-            )
-        )
+        # extended_indices = extend_indices(
+        #     fri_proof.round_proofs[0].indices,
+        #     self.fri_parameters.initial_evaluation_domain_length,
+        #     self.fri_parameters.folding_factor,
+        # )
+        # extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
+        # # print(extended_xs)
+
+        # print(trace_polynomials[1](extended_xs))
+
+        # tpe = trace_polynomials[0](self.fri_parameters.initial_evaluation_domain)
+        # tp_se = stack(tpe, self.fri_parameters.folding_factor)
+        # print(tp_se[indices_to_prove])
+
+        # print(
+        #     trace_polynomials[0](
+        #         self.fri_parameters.field(
+        #             [
+        #                 [10376293537166655489, 28672],
+        #                 [1970324836974592, 18446744069414584314],
+        #                 [18446744061898391553, 18446251488205455361],
+        #                 [18446743107341910241, 14680064],
+        #                 [18446744009285042177, 18442803419741552641],
+        #             ]
+        #         )
+        #     )
+        # )
 
         return StarkProof(
             combination_polynomial_proof=fri_proof,
