@@ -165,13 +165,17 @@ class StarkProver:
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
 
-        # extended_indices = extend_indices(
-        #     fri_proof.round_proofs[0].indices,
-        #     self.fri_parameters.initial_evaluation_domain_length,
-        #     self.fri_parameters.folding_factor,
-        # )
-        # extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
-        # # print(extended_xs)
+        extended_indices = extend_indices(
+            fri_proof.round_proofs[0].indices,
+            self.fri_parameters.initial_evaluation_domain_length,
+            self.fri_parameters.folding_factor,
+        )
+        extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
+        # print(extended_xs)
+
+        print(transition_quotients[0](extended_xs))
+
+        # print(scaled_trace_polynomials[1](extended_xs))
 
         # print(trace_polynomials[1](extended_xs))
 

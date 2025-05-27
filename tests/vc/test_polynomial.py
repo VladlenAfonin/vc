@@ -1,5 +1,6 @@
 import typing
 import galois
+import numpy
 import pytest
 
 from vc.constants import FIELD_193
@@ -196,5 +197,36 @@ def test_evaluate_symbolic_mpoly(
     assert expected == result
 
 
-# def test_evalv_mpoly()
-#     mpoly =
+@pytest.mark.parametrize(
+    "coeffs, points, expected",
+    [
+        (
+            {
+                (1, 1): 2,
+            },  # 2xy
+            TEST_FIELD(
+                [
+                    [
+                        [1, 1],
+                        [2, 3],
+                    ],
+                    [
+                        [1, 2],
+                        [0, 1],
+                    ],
+                ]
+            ),
+            TEST_FIELD(
+                [
+                    [2, 4],
+                    [0, 6],
+                ]
+            ),
+        ),
+    ],
+)
+def test_evalv_mpoly(coeffs, points, expected):
+    mpoly = MPoly(coeffs, TEST_FIELD)
+    result = mpoly.evalv(points)
+    print(result)
+    assert numpy.all(result == expected)

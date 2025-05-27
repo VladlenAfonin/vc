@@ -131,6 +131,8 @@ class StarkVerifier:
             )
         )
 
+        # print(tracep_se_next[:, :, 1])
+
         points = self.state.fri_parameters.field(
             numpy.concatenate([tracep_se_current, tracep_se_next], axis=2)
         )
@@ -140,6 +142,7 @@ class StarkVerifier:
             tc.evalv(points) // omicron_zerofier(extended_xs_current)
             for tc in transition_constraints
         ]
+        print(tq_ses[0])
 
         commited_evaluations = [tq for tq in tq_ses] + [
             bc for bc in proof.bq_current.stacked_evaluations
