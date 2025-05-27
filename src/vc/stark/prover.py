@@ -1,5 +1,4 @@
 import dataclasses
-from inspect import walktree
 import logging
 import typing
 import functools
@@ -9,7 +8,7 @@ import pymerkle
 
 from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
-from vc.fri.fold import extend_indices, stack
+from vc.fri.fold import stack
 from vc.sponge import Sponge
 from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
@@ -123,15 +122,12 @@ class StarkProver:
             tc.evals(trace_polynomials + scaled_trace_polynomials)
             for tc in transition_constraints
         ]
-        # print(transition_polynomials)
 
         omicron_zerofier = self.get_transition_zerofier(aet.shape[0])
-        # print(omicron_zerofier)
 
         # INFO: Transition polynomials are expected to equal 0 at omicron
         #       domain, so we only need to divide out the zerofier.
         transition_quotients = [tp // omicron_zerofier for tp in transition_polynomials]
-        # print(transition_quotients)
 
         commited_polynomials = transition_quotients + boundary_quotients
         n_weights = len(commited_polynomials)
@@ -165,38 +161,6 @@ class StarkProver:
             bq_stacked_evaluations_chosen_next.append(
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
-
-        extended_indices = extend_indices(
-            fri_proof.round_proofs[0].indices,
-            self.fri_parameters.initial_evaluation_domain_length,
-            self.fri_parameters.folding_factor,
-        )
-        extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
-        # print(extended_xs)
-
-        # print(transition_quotients[0])
-
-        # print(scaled_trace_polynomials[1](extended_xs))
-
-        # print(trace_polynomials[1](extended_xs))
-
-        # tpe = trace_polynomials[0](self.fri_parameters.initial_evaluation_domain)
-        # tp_se = stack(tpe, self.fri_parameters.folding_factor)
-        # print(tp_se[indices_to_prove])
-
-        # print(
-        #     trace_polynomials[0](
-        #         self.fri_parameters.field(
-        #             [
-        #                 [10376293537166655489, 28672],
-        #                 [1970324836974592, 18446744069414584314],
-        #                 [18446744061898391553, 18446251488205455361],
-        #                 [18446743107341910241, 14680064],
-        #                 [18446744009285042177, 18442803419741552641],
-        #             ]
-        #         )
-        #     )
-        # )
 
         return StarkProof(
             combination_polynomial_proof=fri_proof,

@@ -6,7 +6,7 @@ import typing
 import galois
 import numpy
 
-from vc.fri.fold import extend_indices, stack
+from vc.fri.fold import extend_indices
 from vc.merkle import MerkleTree
 from vc.polynomial import MPoly
 from vc.sponge import Sponge
@@ -131,20 +131,15 @@ class StarkVerifier:
             )
         )
 
-        # print(tracep_se_next[:, :, 1])
-
         points = self.state.fri_parameters.field(
             numpy.concatenate([tracep_se_current, tracep_se_next], axis=2)
         )
-        # print(points)
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
-        # print(omicron_zerofier)
         tq_ses = [
             tc.evalv(points) // omicron_zerofier(extended_xs_current)
             for tc in transition_constraints
         ]
-        # print(tq_ses[0])
 
         commited_evaluations = [tq for tq in tq_ses] + [
             bc for bc in proof.bq_current.stacked_evaluations
@@ -155,9 +150,6 @@ class StarkVerifier:
             (p * w for p, w in zip(commited_evaluations, weights)),
             self.state.fri_parameters.field(0),
         )
-
-        print(combination_evaluations)
-        print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
 
         return bool(
             numpy.all(
