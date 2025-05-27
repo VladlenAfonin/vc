@@ -136,13 +136,15 @@ class StarkVerifier:
         points = self.state.fri_parameters.field(
             numpy.concatenate([tracep_se_current, tracep_se_next], axis=2)
         )
+        # print(points)
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
+        # print(omicron_zerofier)
         tq_ses = [
             tc.evalv(points) // omicron_zerofier(extended_xs_current)
             for tc in transition_constraints
         ]
-        print(tq_ses[0])
+        # print(tq_ses[0])
 
         commited_evaluations = [tq for tq in tq_ses] + [
             bc for bc in proof.bq_current.stacked_evaluations
@@ -154,15 +156,17 @@ class StarkVerifier:
             self.state.fri_parameters.field(0),
         )
 
-        # print(combination_evaluations)
-        # print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
+        print(combination_evaluations)
+        print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
 
-        return True
-
-        # return (
-        #     combination_evaluations
-        #     == proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations
-        # )
+        return bool(
+            numpy.all(
+                combination_evaluations
+                == proof.combination_polynomial_proof.round_proofs[
+                    0
+                ].stacked_evaluations
+            )
+        )
 
     @logging_mark(logger)
     def get_boundary_zerofiers(
@@ -215,6 +219,6 @@ class StarkVerifier:
 
     def get_transition_zerofier(self, n_rows) -> galois.Poly:
         field = self.state.fri_parameters.field
-        omicron_domain = field([self.state.omicron**i for i in range(n_rows)])
+        omicron_domain = field([self.state.omicron**i for i in range(n_rows - 1)])
 
         return galois.Poly.Roots(omicron_domain, field=field)

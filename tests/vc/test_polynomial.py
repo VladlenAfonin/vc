@@ -202,31 +202,46 @@ def test_evaluate_symbolic_mpoly(
     [
         (
             {
-                (1, 1): 2,
-            },  # 2xy
-            TEST_FIELD(
-                [
-                    [
-                        [1, 1],
-                        [2, 3],
-                    ],
+                (1, 0, 0): 1,
+                (0, 1, 0): 1,
+                (0, 0, 1): 1,
+            },  # x + y + z
+            [
+                TEST_FIELD(
                     [
                         [1, 2],
-                        [0, 1],
-                    ],
-                ]
-            ),
+                        [3, 4],
+                    ]
+                ),
+                TEST_FIELD(
+                    [
+                        [1, 2],
+                        [3, 4],
+                    ]
+                ),
+                TEST_FIELD(
+                    [
+                        [1, 2],
+                        [3, 4],
+                    ]
+                ),
+            ],
             TEST_FIELD(
                 [
-                    [2, 4],
-                    [0, 6],
+                    [3, 6],
+                    [9, 12],
                 ]
             ),
         ),
     ],
 )
 def test_evalv_mpoly(coeffs, points, expected):
+    print()
     mpoly = MPoly(coeffs, TEST_FIELD)
+    points = TEST_FIELD(numpy.stack(points, axis=2))
+    print(points)
+
     result = mpoly.evalv(points)
     print(result)
+    print(expected)
     assert numpy.all(result == expected)

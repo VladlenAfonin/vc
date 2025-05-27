@@ -1,4 +1,5 @@
 import dataclasses
+from inspect import walktree
 import logging
 import typing
 import functools
@@ -122,15 +123,15 @@ class StarkProver:
             tc.evals(trace_polynomials + scaled_trace_polynomials)
             for tc in transition_constraints
         ]
+        # print(transition_polynomials)
 
-        omicron_zerofier = galois.Poly.Roots(
-            self.state.omicron_domain[0 : aet.shape[0] - 1],
-            field=self.fri_parameters.field,
-        )
+        omicron_zerofier = self.get_transition_zerofier(aet.shape[0])
+        # print(omicron_zerofier)
 
         # INFO: Transition polynomials are expected to equal 0 at omicron
         #       domain, so we only need to divide out the zerofier.
         transition_quotients = [tp // omicron_zerofier for tp in transition_polynomials]
+        # print(transition_quotients)
 
         commited_polynomials = transition_quotients + boundary_quotients
         n_weights = len(commited_polynomials)
@@ -173,7 +174,7 @@ class StarkProver:
         extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
         # print(extended_xs)
 
-        print(transition_quotients[0](extended_xs))
+        # print(transition_quotients[0])
 
         # print(scaled_trace_polynomials[1](extended_xs))
 
@@ -243,3 +244,12 @@ class StarkProver:
     def get_trace_polynomials(self, aet: galois.FieldArray) -> typing.List[galois.Poly]:
         # TODO: This does not yet support "not power of two" AET heights.
         return [galois.lagrange_poly(self.state.omicron_domain, col) for col in aet.T]
+
+    # TODO: This function is common. Extract it.
+    def get_transition_zerofier(self, n_rows) -> galois.Poly:
+        field = self.fri_parameters.field
+        omicron_domain = field(
+            [self.stark_parameters.omicron**i for i in range(n_rows - 1)]
+        )
+
+        return galois.Poly.Roots(omicron_domain, field=field)
