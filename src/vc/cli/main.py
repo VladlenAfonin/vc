@@ -78,10 +78,14 @@ class FriOptions:
 def parse_arguments() -> FriOptions:
     parser = argparse.ArgumentParser(
         prog="vc",
-        description="FRI polynomial commitment scheme experimentation program",
+        description="Verifiable Computations (VC) experimentation program",
     )
 
-    parser.add_argument(
+    subparsers = parser.add_subparsers()
+    fri = subparsers.add_parser("fri")
+    stark = subparsers.add_parser("stark")
+
+    fri.add_argument(
         "--ff",
         "--folding-factor-log",
         action="store",
@@ -90,11 +94,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.folding_factor_log_default],
         required=False,
-        metavar="FACTOR",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "--ef",
         "--expansion-factor-log",
         action="store",
@@ -103,11 +107,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.expansion_factor_log_default],
         required=False,
-        metavar="FACTOR",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "-f",
         "--field",
         action="store",
@@ -116,11 +120,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.field_default],
         required=False,
-        metavar="MODULUS",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "--fd",
         "--final-degree-log",
         action="store",
@@ -129,11 +133,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.final_degree_log_default],
         required=False,
-        metavar="N",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "--id",
         "--initial-degree-log",
         action="store",
@@ -142,11 +146,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.initial_degree_log_default],
         required=False,
-        metavar="N",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "--sl",
         "--security-level-bits",
         action="store",
@@ -155,11 +159,11 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[FriOptionsDefault.security_level_bits_default],
         required=False,
-        metavar="LEVEL",
+        metavar="NUMBER",
         type=int,
     )
 
-    parser.add_argument(
+    fri.add_argument(
         "-s",
         "--seed",
         action="store",
@@ -168,7 +172,7 @@ def parse_arguments() -> FriOptions:
         nargs=1,
         default=[None],
         required=False,
-        metavar="LEVEL",
+        metavar="NUMBER",
         type=int,
     )
 
