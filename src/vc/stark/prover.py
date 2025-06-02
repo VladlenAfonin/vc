@@ -36,10 +36,7 @@ class StarkProver:
             omicron: galois.FieldArray,
             aet_height: int,
         ) -> None:
-            nearest_power_of_two = get_nearest_power_of_two(aet_height)
-            self.omicron_domain = field(
-                [omicron**i for i in range(nearest_power_of_two)]
-            )
+            self.omicron_domain = field([omicron**i for i in range(aet_height)])
 
     stark_parameters: StarkParameters
     fri_parameters: FriParameters

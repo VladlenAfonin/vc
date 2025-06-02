@@ -44,16 +44,15 @@ def get_test_stark(n: int) -> typing.Tuple[StarkProver, StarkVerifier]:
     fri_prover = FriProver(fri_parameters)
     fri_verifier = FriVerifier(fri_parameters)
 
-    stark_prover_state = StarkProver.StarkProverState(
-        field=TEST_FIELD,
-        omicron=omicron,
-        aet_height=n,
-    )
     return (
         StarkProver(
             stark_parameters=stark_parameters,
             fri_prover=fri_prover,
-            state=stark_prover_state,
+            state=StarkProver.StarkProverState(
+                field=TEST_FIELD,
+                omicron=omicron,
+                aet_height=n,
+            ),
             fri_parameters=fri_parameters,
         ),
         StarkVerifier(
@@ -86,7 +85,7 @@ def test_get_trace_polynomials(n: int):
     ) == fib(n), "invalid first row"
 
 
-@pytest.mark.parametrize("n", [16, 32, 64])
+@pytest.mark.parametrize("n", [8, 13, 16, 17, 63, 65])
 def test_stark(n: int):
     result = fib(n)
     aet = get_aet(n)
