@@ -86,7 +86,7 @@ def test_get_trace_polynomials(n: int):
     ) == fib(n), "invalid first row"
 
 
-@pytest.mark.parametrize("n", [16])
+@pytest.mark.parametrize("n", [16, 32, 64])
 def test_stark(n: int):
     result = fib(n)
     aet = get_aet(n)

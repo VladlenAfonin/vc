@@ -142,7 +142,7 @@ class StarkVerifier:
         ]
 
         commited_evaluations = [tq for tq in tq_ses] + [
-            bc for bc in proof.bq_current.stacked_evaluations
+            bq for bq in proof.bq_current.stacked_evaluations
         ]
 
         combination_evaluations = functools.reduce(
