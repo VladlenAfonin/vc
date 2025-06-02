@@ -155,7 +155,7 @@ def fold_domain(
 
 
 def stack(
-    evaluations: galois.FieldArray,
+    evaluations: galois.FieldArray | galois.Array,
     folding_factor: int,
 ) -> galois.FieldArray:
     """Stack evaluations.

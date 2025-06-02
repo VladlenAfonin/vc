@@ -6,7 +6,6 @@ import functools
 import galois
 import pymerkle
 
-from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
 from vc.fri.fold import stack
 from vc.sponge import Sponge
