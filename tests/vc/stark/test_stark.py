@@ -6,7 +6,7 @@ from vc.base import get_nearest_power_of_two
 from vc.fri.parameters import FriParameters
 from vc.fri.prover import FriProver
 from vc.fri.verifier import FriVerifier
-from vc.stark.airs import counter
+from vc.stark.airs import counter, factorial
 from vc.stark.airs.fibonacci import (
     fib,
     get_aet,
@@ -95,7 +95,7 @@ def test_stark(n: int):
     boundary_constraints = get_boundary_constraints(n, result)
     transition_constraints = get_transition_constraints()
 
-    stark_prover, stark_verifier = get_test_stark(n)
+    stark_prover, stark_verifier = get_test_stark(aet.shape[0])
     proof = stark_prover.prove(
         aet,
         transition_constraints,
@@ -119,7 +119,31 @@ def test_stark_counter(n: int):
     boundary_constraints = counter.get_boundary_constraints(n)
     transition_constraints = counter.get_transition_constraints()
 
-    stark_prover, stark_verifier = get_test_stark(n)
+    stark_prover, stark_verifier = get_test_stark(aet.shape[0])
+    proof = stark_prover.prove(
+        aet,
+        transition_constraints,
+        boundary_constraints,
+    )
+    result = stark_verifier.verify(
+        proof,
+        transition_constraints,
+        boundary_constraints,
+        aet.shape[1],
+        aet.shape[0],
+    )
+
+    assert result, "invalid proof"
+
+
+@pytest.mark.parametrize("n", [5])
+def test_stark_factorial(n: int):
+    result = math.factorial(n)
+    aet = factorial.get_aet(n)
+    boundary_constraints = factorial.get_boundary_constraints(n, result)
+    transition_constraints = factorial.get_transition_constraints()
+
+    stark_prover, stark_verifier = get_test_stark(aet.shape[0])
     proof = stark_prover.prove(
         aet,
         transition_constraints,

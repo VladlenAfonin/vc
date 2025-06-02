@@ -117,6 +117,8 @@ class StarkVerifier:
             )
         )
 
+        # print(tracep_se_current[:, :, 1])
+
         tracep_se_next = self.state.fri_parameters.field(
             numpy.stack(
                 [
@@ -141,6 +143,8 @@ class StarkVerifier:
             for tc in transition_constraints
         ]
 
+        # print(tq_ses[0])
+
         commited_evaluations = [tq for tq in tq_ses] + [
             bq for bq in proof.bq_current.stacked_evaluations
         ]
@@ -150,6 +154,9 @@ class StarkVerifier:
             (p * w for p, w in zip(commited_evaluations, weights)),
             self.state.fri_parameters.field(0),
         )
+
+        # print(combination_evaluations)
+        # print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
 
         return bool(
             numpy.all(

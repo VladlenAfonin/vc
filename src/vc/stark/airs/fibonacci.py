@@ -4,7 +4,6 @@ Fibonacci sequence = {0, 1, 1, ...}, indexation is from 0.
 
 import typing
 import numpy
-import numpy.typing
 import galois
 
 from vc.constants import FIELD_GOLDILOCKS

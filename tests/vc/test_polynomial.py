@@ -185,6 +185,19 @@ def test_evaluate_mpoly(
             # [1, 2, 3, 2, 0, 0], deg = 5, ncoeffs = 6
             galois.Poly([1, 2, 3, 2, 0, 0], field=TEST_FIELD),
         ),
+        (
+            {  # z - xy
+                (0, 0, 1): 1,
+                (1, 1, 0): -1,
+            },
+            [
+                galois.Poly([1, 0], field=TEST_FIELD),
+                galois.Poly([1, 1, 0], field=TEST_FIELD),
+                galois.Poly([0, 1, 1], field=TEST_FIELD),
+            ],  # x, x^2 + x, x + 1
+            # (x + 1) - x(x^2 + x) = x + 1 - x^3 - x^2 = -x^3 -x^2 + x + 1
+            galois.Poly([-1, -1, 1, 1], field=TEST_FIELD),
+        ),
     ],
 )
 def test_evaluate_symbolic_mpoly(
