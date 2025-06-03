@@ -114,6 +114,7 @@ class StarkProver:
         scaled_trace_polynomials = [
             scale(tp, int(self.stark_parameters.omicron)) for tp in trace_polynomials
         ]
+
         transition_polynomials = [
             tc.evals(trace_polynomials + scaled_trace_polynomials)
             for tc in transition_constraints
@@ -158,20 +159,43 @@ class StarkProver:
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
 
-        # extended_indices = extend_indices(
-        #     indices_to_prove,
-        #     self.fri_parameters.initial_evaluation_domain_length,
-        #     self.fri_parameters.folding_factor,
-        # )
+        extended_indices = extend_indices(
+            indices_to_prove,
+            self.fri_parameters.initial_evaluation_domain_length,
+            self.fri_parameters.folding_factor,
+        )
 
-        # extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
+        extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
 
-        # print(
-        #     trace_polynomials[1](
-        #         self.fri_parameters.initial_evaluation_domain[extended_indices]
-        #     )
-        # )
+        # print()
+        # print(trace_polynomials[0](extended_xs))
 
+        # print()
+        # print(trace_polynomials[1](extended_xs))
+
+        # print()
+        # print(trace_polynomials[0](extended_xs * self.stark_parameters.omicron))
+
+        # print()
+        # print(trace_polynomials[1](extended_xs * self.stark_parameters.omicron))
+
+        # print()
+        # print(transition_polynomials[0](extended_xs))
+
+        # print()
+        # print(transition_polynomials[1](extended_xs))
+
+        # print("omicron zerofier")
+        # print(omicron_zerofier(extended_xs))
+
+        # TODO: These should be equal AFAIU.
+        print()
+        print(transition_polynomials[0](extended_xs) // omicron_zerofier(extended_xs))
+
+        print()
+        print(transition_quotients[0](extended_xs))
+
+        # print()
         # print(transition_quotients[0](extended_xs))
 
         return StarkProof(

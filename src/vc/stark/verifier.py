@@ -145,11 +145,25 @@ class StarkVerifier:
         # print(points)
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
+        omicron_zerofier_evaluations = omicron_zerofier(extended_xs_current)
         tq_ses = [
-            tc.evalv2(points) // omicron_zerofier(extended_xs_current)
+            tc.evalv2(points) // omicron_zerofier_evaluations
             for tc in transition_constraints
         ]
 
+        # print("transition constraints")
+        # print(transition_constraints[0].evalv2(points))
+
+        # print("omicron zerofier")
+        # print(omicron_zerofier(extended_xs_current))
+
+        # print()
+        # print(transition_constraints[0].evalv2(points))
+
+        # print()
+        # print(transition_constraints[1].evalv2(points))
+
+        # print()
         # print(tq_ses[0])
 
         commited_evaluations = [tq for tq in tq_ses] + [
