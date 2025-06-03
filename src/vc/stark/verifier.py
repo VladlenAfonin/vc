@@ -113,11 +113,12 @@ class StarkVerifier:
                         boundaries.polynomials,
                     )
                 ],
-                axis=2,
+                axis=0,
             )
         )
 
-        # print(tracep_se_current[:, :, 1])
+        # print()
+        # print(tracep_se_current)
 
         tracep_se_next = self.state.fri_parameters.field(
             numpy.stack(
@@ -129,17 +130,23 @@ class StarkVerifier:
                         boundaries.polynomials,
                     )
                 ],
-                axis=2,
+                axis=0,
             )
         )
 
+        # print()
+        # print(tracep_se_next)
+
         points = self.state.fri_parameters.field(
-            numpy.concatenate([tracep_se_current, tracep_se_next], axis=2)
+            numpy.concatenate([tracep_se_current, tracep_se_next], axis=0)
         )
+
+        # print()
+        # print(points)
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
         tq_ses = [
-            tc.evalv(points) // omicron_zerofier(extended_xs_current)
+            tc.evalv2(points) // omicron_zerofier(extended_xs_current)
             for tc in transition_constraints
         ]
 

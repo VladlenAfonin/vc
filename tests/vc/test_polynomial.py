@@ -249,12 +249,8 @@ def test_evaluate_symbolic_mpoly(
     ],
 )
 def test_evalv_mpoly(coeffs, points, expected):
-    print()
     mpoly = MPoly(coeffs, TEST_FIELD)
     points = TEST_FIELD(numpy.stack(points, axis=2))
-    print(points)
 
     result = mpoly.evalv(points)
-    print(result)
-    print(expected)
     assert numpy.all(result == expected)

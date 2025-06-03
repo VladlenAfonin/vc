@@ -209,6 +209,12 @@ class MPoly:
             numpy.apply_along_axis(self.eval, axis=-1, arr=points),
         )
 
+    def evalv2(self, points: galois.FieldArray) -> galois.FieldArray:
+        assert points.shape[0] == self.n_coeffs
+        return self.field(
+            numpy.apply_along_axis(self.eval, axis=0, arr=points),
+        )
+
     def evals(self, polys: typing.List[galois.Poly]) -> galois.Poly:
         """
         Symbolically evaluates the polynomial by substituting univariate polynomials in place of variables.
