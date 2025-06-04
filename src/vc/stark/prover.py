@@ -7,7 +7,7 @@ import galois
 import pymerkle
 
 from vc.fri.parameters import FriParameters
-from vc.fri.fold import extend_indices, stack
+from vc.fri.fold import stack
 from vc.sponge import Sponge
 from vc.polynomial import MPoly, scale
 from vc.stark.boundary import Boundaries, BoundaryConstraint
