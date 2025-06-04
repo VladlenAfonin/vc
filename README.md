@@ -11,10 +11,11 @@ This repository contains tools for verifiable computations. It is mainly focused
 <!-- mtoc start -->
 
 - [Setup](#setup)
-  - [Linux/macOS](#linuxmacos)
-  - [Windows](#windows)
+    - [Linux/macOS](#linuxmacos)
+    - [Windows](#windows)
 - [Usage](#usage)
-  - [Example](#example)
+    - [FRI](#fri)
+        - [Example](#example)
 
 <!-- mtoc end -->
 
@@ -66,36 +67,56 @@ It is assumed below that you have installed python from the [official website](h
 
 # Usage
 
+The program is divided into subprograms each for experimenting with different primitives.
+
 ```bash
 vc --help
 ```
 
 ```
-usage: vc [-h] [--ff FACTOR] [--ef FACTOR] [-f MODULUS] [--fd N] [--id N] [--sl LEVEL]
-          [-s LEVEL]
+usage: vc [-h] {fri} ...
 
-FRI polynomial commitment scheme experimentation program
+Verifiable Computations (VC) experimentation program
+
+positional arguments:
+  {fri}
+
+options:
+  -h, --help  show this help message and exit
+```
+
+## FRI
+
+```bash
+vc fri --help
+```
+
+```
+usage: vc fri [-h] [--ff NUMBER] [--ef NUMBER] [-f NUMBER] [--fd NUMBER]
+              [--id NUMBER] [--sl NUMBER] [-s NUMBER]
 
 options:
   -h, --help            show this help message and exit
-  --ff, --folding-factor-log FACTOR
+  --ff, --folding-factor-log NUMBER
                         folding factor. default: 3
-  --ef, --expansion-factor-log FACTOR
+  --ef, --expansion-factor-log NUMBER
                         expansion factor. default: 3
-  -f, --field MODULUS   prime field size. default: 18446744069414584321
-  --fd, --final-degree-log N
-                        number of coefficients when to stop the protocol. default: 2
-  --id, --initial-degree-log N
+  -f, --field NUMBER    prime field size. default: 18446744069414584321
+  --fd, --final-degree-log NUMBER
+                        number of coefficients when to stop the protocol.
+                        default: 2
+  --id, --initial-degree-log NUMBER
                         initial number of coefficients. default: 10
-  --sl, --security-level-bits LEVEL
+  --sl, --security-level-bits NUMBER
                         desired security level in bits. default: 5
-  -s, --seed LEVEL      randomness seed. default: 64 bit integer chosen at random
+  -s, --seed NUMBER     randomness seed. default: 64 bit integer chosen at
+                        random
 ```
 
-## Example
+### Example
 
 ```bash
-vc --ff 3 --id 10 --fd 1 --sl 16 --ef 2
+vc fri --ff 3 --id 10 --fd 1 --sl 16 --ef 2
 ```
 
 ```
