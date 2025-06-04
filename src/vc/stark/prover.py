@@ -193,7 +193,7 @@ class StarkProver:
         print(transition_polynomials[0](extended_xs) // omicron_zerofier(extended_xs))
 
         print()
-        print(transition_quotients[0](extended_xs))
+        print((transition_polynomials[0] // omicron_zerofier)(extended_xs))
 
         # print()
         # print(transition_quotients[0](extended_xs))
