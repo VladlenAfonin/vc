@@ -14,7 +14,7 @@ def get_transition_constraints() -> typing.List[MPoly]:
     return [
         MPoly(
             {  # y1 - x1 - 1
-                (0, 0, 1, 0): FIELD_GOLDILOCKS(0),
+                (0, 0, 1, 0): FIELD_GOLDILOCKS(1),
                 (1, 0, 0, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
                 (0, 0, 0, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
             },
@@ -22,7 +22,7 @@ def get_transition_constraints() -> typing.List[MPoly]:
         ),
         MPoly(
             {  # y2 - y1*x2
-                (0, 0, 0, 1): FIELD_GOLDILOCKS(0),
+                (0, 0, 0, 1): FIELD_GOLDILOCKS(1),
                 (0, 1, 1, 0): FIELD_GOLDILOCKS(FIELD_GOLDILOCKS.order - 1),
             },
             FIELD_GOLDILOCKS,

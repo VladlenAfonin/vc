@@ -159,45 +159,6 @@ class StarkProver:
                 bq_stacked_evaluations_next[i][indices_to_prove]
             )
 
-        extended_indices = extend_indices(
-            indices_to_prove,
-            self.fri_parameters.initial_evaluation_domain_length,
-            self.fri_parameters.folding_factor,
-        )
-
-        extended_xs = self.fri_parameters.initial_evaluation_domain[extended_indices]
-
-        # print()
-        # print(trace_polynomials[0](extended_xs))
-
-        # print()
-        # print(trace_polynomials[1](extended_xs))
-
-        # print()
-        # print(trace_polynomials[0](extended_xs * self.stark_parameters.omicron))
-
-        # print()
-        # print(trace_polynomials[1](extended_xs * self.stark_parameters.omicron))
-
-        # print()
-        # print(transition_polynomials[0](extended_xs))
-
-        # print()
-        # print(transition_polynomials[1](extended_xs))
-
-        # print("omicron zerofier")
-        # print(omicron_zerofier(extended_xs))
-
-        # TODO: These should be equal AFAIU.
-        print()
-        print(transition_polynomials[0](extended_xs) // omicron_zerofier(extended_xs))
-
-        print()
-        print((transition_polynomials[0] // omicron_zerofier)(extended_xs))
-
-        # print()
-        # print(transition_quotients[0](extended_xs))
-
         return StarkProof(
             combination_polynomial_proof=fri_proof,
             bq_current=BoundaryQuotientProof(

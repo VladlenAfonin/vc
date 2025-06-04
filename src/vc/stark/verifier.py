@@ -37,7 +37,7 @@ class StarkVerifier:
         transition_constraints: typing.List[MPoly],
         boundary_constraints: typing.List[BoundaryConstraint],
         n_registers: int,
-        n_rows,
+        n_rows: int,
     ) -> bool:
         sponge = Sponge(self.state.fri_parameters.field)
 
@@ -117,9 +117,6 @@ class StarkVerifier:
             )
         )
 
-        # print()
-        # print(tracep_se_current)
-
         tracep_se_next = self.state.fri_parameters.field(
             numpy.stack(
                 [
@@ -134,15 +131,9 @@ class StarkVerifier:
             )
         )
 
-        # print()
-        # print(tracep_se_next)
-
         points = self.state.fri_parameters.field(
             numpy.concatenate([tracep_se_current, tracep_se_next], axis=0)
         )
-
-        # print()
-        # print(points)
 
         omicron_zerofier = self.get_transition_zerofier(n_rows)
         omicron_zerofier_evaluations = omicron_zerofier(extended_xs_current)
@@ -150,21 +141,6 @@ class StarkVerifier:
             tc.evalv2(points) // omicron_zerofier_evaluations
             for tc in transition_constraints
         ]
-
-        # print("transition constraints")
-        # print(transition_constraints[0].evalv2(points))
-
-        # print("omicron zerofier")
-        # print(omicron_zerofier(extended_xs_current))
-
-        # print()
-        # print(transition_constraints[0].evalv2(points))
-
-        # print()
-        # print(transition_constraints[1].evalv2(points))
-
-        # print()
-        # print(tq_ses[0])
 
         commited_evaluations = [tq for tq in tq_ses] + [
             bq for bq in proof.bq_current.stacked_evaluations
@@ -175,9 +151,6 @@ class StarkVerifier:
             (p * w for p, w in zip(commited_evaluations, weights)),
             self.state.fri_parameters.field(0),
         )
-
-        # print(combination_evaluations)
-        # print(proof.combination_polynomial_proof.round_proofs[0].stacked_evaluations)
 
         return bool(
             numpy.all(
