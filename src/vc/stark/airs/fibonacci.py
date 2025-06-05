@@ -35,9 +35,7 @@ def get_transition_constraints() -> typing.List[MPoly]:
     ]
 
 
-def get_aet(
-    n: int,
-) -> galois.FieldArray:
+def get_aet(n: int) -> galois.FieldArray:
     """Get algebraic execution trace (AET) for Fibonacci numbers.
 
     :param n: Index of the Fibonacci number to build AIR for.
@@ -58,10 +56,7 @@ def get_aet(
     return field(aet)
 
 
-def get_boundary_constraints(
-    n: int,
-    result: int,
-) -> typing.List[BoundaryConstraint]:
+def get_boundary_constraints(n: int, result: int) -> typing.List[BoundaryConstraint]:
     """Get boundary constraints."""
 
     assert n > 0, "unable to create boundary constrainst for n < 1"
@@ -74,9 +69,7 @@ def get_boundary_constraints(
     return bc
 
 
-def fib(
-    n: int,
-) -> int:
+def fib(n: int) -> int:
     assert n > -1, "invalid Fibonacci number index"
 
     memo = {}

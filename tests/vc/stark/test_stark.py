@@ -89,7 +89,7 @@ def test_get_trace_polynomials(n: int):
 
 
 @pytest.mark.parametrize("n", [8, 13, 16, 17, 63, 65])
-def test_stark(n: int):
+def test_stark_fibonacci(n: int):
     result = fib(n)
     aet = get_aet(n)
     boundary_constraints = get_boundary_constraints(n, result)

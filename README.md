@@ -4,7 +4,17 @@ This is an academic prototype which is not intended for production use, as it di
 
 # About
 
-This repository contains tools for verifiable computations. It is mainly focused on researching STARKs, its components and constructions based on STARKs.
+This repository contains tools for verifiable computations. It is mainly focused on researching STARKs, its components and constructions based on STARKs. Now FRI and STARK are implemented. A lot of improvements are planned, such as
+
+- [x] Basic arbitrary-degree FRI
+- [x] Basic STARK
+- [x] Basic AIRs for Fibonacci numbers and factorial
+- [ ] Batch FRI
+- [ ] Zero-knowledge in STARK
+- [ ] Batch proof for transition constraints in STARK
+- [ ] AET definition DSL for convenient custom AIR definition
+
+And many more.
 
 # Table of contents
 
@@ -16,6 +26,8 @@ This repository contains tools for verifiable computations. It is mainly focused
 - [Usage](#usage)
     - [FRI](#fri)
         - [Example](#example)
+    - [STARK](#stark)
+        - [Example](#example-1)
 
 <!-- mtoc end -->
 
@@ -74,15 +86,20 @@ vc --help
 ```
 
 ```
-usage: vc [-h] {fri} ...
+usage: vc [-h] {fri,stark} ...
 
-Verifiable Computations (VC) experimentation program
-
-positional arguments:
-  {fri}
+verifiable computations (VC) experimentation program
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help   show this help message and exit
+
+subprograms:
+  choose one of the subprograms for running and experimenting with
+  corresponding protocols or primitives
+
+  {fri,stark}
+    fri        run FRI with specified parameters
+    stark      run STARK for one of preprogrammed tasks
 ```
 
 ## FRI
@@ -94,6 +111,8 @@ vc fri --help
 ```
 usage: vc fri [-h] [--ff NUMBER] [--ef NUMBER] [-f NUMBER] [--fd NUMBER]
               [--id NUMBER] [--sl NUMBER] [-s NUMBER]
+
+subprogram for running FRI IOPP with specified parameters
 
 options:
   -h, --help            show this help message and exit
@@ -138,5 +157,71 @@ proof:
     proof size: 8 KB
 
 verifier time: 21 ms
+verification result: True
+```
+
+## STARK
+
+```bash
+vc stark --help
+```
+
+```
+usage: vc stark [-h] [-l] [-a {fibonacci,factorial,count}] [--ff NUMBER]
+                [--ef NUMBER] [--fd NUMBER] [--sl NUMBER] [-s NUMBER]
+                [air_arguments ...]
+
+subprogram for running STARK with specified parameters for proving the results
+of a specified task
+
+positional arguments:
+  air_arguments         arguments to pass to AIR generation, like "n" in
+                        fibonacci(n)
+
+options:
+  -h, --help            show this help message and exit
+  -l, --list            list available AIRs for experimanting with
+  -a, --air {fibonacci,factorial,count}
+                        chose the function STARK should prove the result for.
+                        default: fibonacci
+  --ff, --folding-factor-log NUMBER
+                        folding factor. default: 3
+  --ef, --expansion-factor-log NUMBER
+                        expansion factor. default: 3
+  --fd, --final-degree-log NUMBER
+                        number of coefficients when to stop the protocol.
+                        default: 2
+  --sl, --security-level-bits NUMBER
+                        desired security level in bits. default: 5
+  -s, --seed NUMBER     randomness seed. default: 64 bit integer chosen at
+                        random
+```
+
+### Example
+
+```bash
+vc stark --air fibonacci --ff 2 --sl 64 90
+```
+
+```
+proving that 90-th fibonacci number is 2880067194370816120
+AET shape: (90, 2)
+number of boundary constraints: 2
+number of transition constraints: 2
+
+fri parameters: 
+    expansion factor = 8 (2^3)
+    folding factor = 4 (2^2)
+    initial coefficients length = 1024 (2^2)
+    final coefficients length = 4 (2^2)
+    initial evaluation domain length = 8192 (2^13)
+
+    security level = 64 bits
+    number of rounds = 3
+    number of query indices = 22
+
+prover time: 10.25 s
+proof size: 78 KB
+verifier time: 306 ms
 verification result: True
 ```
