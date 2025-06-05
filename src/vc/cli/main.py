@@ -36,12 +36,17 @@ logging.config.dictConfig(logging_config)
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="vc",
-        description="Verifiable Computations (VC) experimentation program",
+        description="verifiable computations (VC) experimentation program",
     )
 
-    subparsers = parser.add_subparsers(required=True)
+    subparsers = parser.add_subparsers(
+        required=True,
+        title="subprograms",
+        description="choose one of the subprograms for running and experimenting with corresponding protocols or primitives",
+    )
 
-    vc.cli.fri.parse_arguments_fri(subparsers)
+    vc.cli.fri.parse_arguments(subparsers)
+    vc.cli.stark.parse_arguments(subparsers)
 
     return parser.parse_args()
 

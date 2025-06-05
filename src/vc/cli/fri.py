@@ -50,8 +50,12 @@ class FriOptions:
     """Randomness seed."""
 
 
-def parse_arguments_fri(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser("fri")
+def parse_arguments(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser(
+        "fri",
+        description="subprogram for running FRI IOPP with specified parameters",
+        help="run FRI with specified parameters",
+    )
     parser.set_defaults(func=main)
 
     parser.add_argument(
