@@ -16,6 +16,6 @@ def get_nearest_power_of_two_ext(n: int) -> typing.Tuple[int, int]:
     power = n.bit_length()
 
     if is_pow2(n):
-        return (n, power)
+        return n, power - 1
 
     return 2**power, power
