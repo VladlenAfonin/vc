@@ -212,7 +212,7 @@ number of transition constraints: 2
 fri parameters: 
     expansion factor = 8 (2^3)
     folding factor = 4 (2^2)
-    initial coefficients length = 1024 (2^2)
+    initial coefficients length = 1024 (2^10)
     final coefficients length = 4 (2^2)
     initial evaluation domain length = 8192 (2^13)
 
