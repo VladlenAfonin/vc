@@ -51,7 +51,7 @@ class FriParameters:
         return f"""
     expansion factor = {self.expansion_factor} (2^{self.expansion_factor_log})
     folding factor = {self.folding_factor} (2^{self.folding_factor_log})
-    initial coefficients length = {self.initial_coefficients_length} (2^{self.final_coefficients_length_log})
+    initial coefficients length = {self.initial_coefficients_length} (2^{self.initial_coefficients_length_log})
     final coefficients length = {self.final_coefficients_length} (2^{self.final_coefficients_length_log})
     initial evaluation domain length = {self.initial_evaluation_domain_length} (2^{math.log2(self.initial_evaluation_domain_length):.0f})
 
