@@ -19,7 +19,8 @@ keywords = [
 dependencies = [
     "galois",
     "numpy",
-    "pymerkle"
+    "pymerkle",
+    "numba"
 ]
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -50,6 +51,10 @@ classifiers = [
 [project.optional-dependencies]
 test = [
     "pytest"
+]
+bench = [
+    "matplotlib",
+    "tqdm"
 ]
 
 [project.scripts]

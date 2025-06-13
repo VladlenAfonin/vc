@@ -1,10 +1,13 @@
 import dataclasses
 import logging
 import math
+from time import time_ns
 
 import galois
+from numba import njit, prange
 
 from vc.base import is_pow2
+from vc.logging import logging_mark
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +63,7 @@ class FriParameters:
     number of query indices = {self.number_of_repetitions}
 """
 
+    @logging_mark(logger)
     def __init__(
         self,
         folding_factor_log: int,
@@ -82,6 +86,7 @@ class FriParameters:
         self.initial_coefficients_length = 1 << initial_coefficients_length_log
         self.final_coefficients_length_log = final_coefficients_length_log
         self.final_coefficients_length = 1 << final_coefficients_length_log
+
         self.initial_evaluation_domain_length = (
             self.initial_coefficients_length * self.expansion_factor
         )
@@ -90,11 +95,14 @@ class FriParameters:
         self.omega = field.primitive_root_of_unity(
             self.initial_evaluation_domain_length
         )
-        self.initial_evaluation_domain = field(
-            [
-                self.offset * (self.omega**i)
-                for i in range(self.initial_evaluation_domain_length)
-            ]
+
+        # WARNING: This call is position dependent.
+        # TODO: Refactor.
+        self.initial_evaluation_domain = FriParameters.get_initial_evaluation_domain(
+            self.field,
+            self.omega,
+            self.offset,
+            self.initial_evaluation_domain_length,
         )
 
         self.number_of_repetitions = self._get_number_of_repetitions(
@@ -141,3 +149,14 @@ class FriParameters:
         accumulator -= 1
 
         return accumulator
+
+    @logging_mark(logger)
+    @staticmethod
+    # @njit(parallel=True)
+    def get_initial_evaluation_domain(
+        field: type[galois.FieldArray],
+        omega: galois.FieldArray,
+        offset: galois.FieldArray,
+        length: int,
+    ) -> galois.FieldArray:
+        return field([offset * (omega**i) for i in range(length)])

@@ -24,7 +24,8 @@ logging_config = {
     },
     "loggers": {
         # "vc.cli.main": {"level": "INFO", "handlers": ["stdout"]},
-        # "vc.fri.prover": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.fri.prover": {"level": "DEBUG", "handlers": ["stdout"]},
+        "vc.fri.parameters": {"level": "DEBUG", "handlers": ["stdout"]},
         # "vc.fri.verifier": {"level": "DEBUG", "handlers": ["stdout"]},
     },
 }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+from time import time, time_ns
 import typing
 
 import galois
@@ -90,9 +91,16 @@ class FriProver:
 
         self._state = FriProver.State(f, self._parameters, sponge)
 
+        logger.debug(f"begin initial domain evaluation")
+        begin = time_ns()
         initial_round_evaluations: galois.FieldArray = self._state.polynomial(
             self._state.evaluation_domain
         )
+        end = time_ns()
+        logger.debug(
+            f"end initial domain evaluation. elapsed: {(end - begin) // 1_000_000} ms"
+        )
+
         stacked_evaluations = stack(
             initial_round_evaluations,
             self._parameters.folding_factor,
@@ -117,13 +125,15 @@ class FriProver:
             randomness,
             self._parameters.initial_coefficients_length,
         )
-        logger.debug(current_value("degree corrected polynomial", g))
-        logger.debug(
-            current_value(
-                "degree correction polynomial",
-                degree_correction_polynomial,
-            )
-        )
+
+        # INFO: These are too much noise.
+        # logger.debug(current_value("degree corrected polynomial", g))
+        # logger.debug(
+        #     current_value(
+        #         "degree correction polynomial",
+        #         degree_correction_polynomial,
+        #     )
+        # )
 
         self._state.polynomial = g
 
